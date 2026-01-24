@@ -1,0 +1,267 @@
+/* =====================================================
+   UI Sprites - Modern User Interface Pack
+   Spritesheet: assets/modernuserinterface-win/32x32/Modern_UI_Style_1_32x32.png
+   Grid: 32x32 pixels per cell
+   Credits required per license
+   ===================================================== */
+
+:root {
+  /* Sprites disabled until assets are added */
+  /* --ui-sprite: url('../assets/modernuserinterface-win/32x32/Modern_UI_Style_1_32x32.png'); */
+  /* --ui-sprite-2: url('../assets/modernuserinterface-win/32x32/Modern_UI_Style_2_32x32.png'); */
+  --ui-sprite: none;
+  --ui-sprite-2: none;
+  --sprite-size: 32px;
+}
+
+/* =====================================================
+   Panel/Window Frames (9-slice capable)
+   Top-left of spritesheet has window frames
+   ===================================================== */
+
+/* Large panel frame - beige/tan style */
+.ui-panel-frame {
+  background-image: var(--ui-sprite);
+  background-repeat: no-repeat;
+  image-rendering: pixelated;
+}
+
+/* Panel corners and edges for 9-slice */
+.ui-panel-tl { background-position: 0 0; width: 32px; height: 32px; }
+.ui-panel-t { background-position: -32px 0; width: 32px; height: 32px; }
+.ui-panel-tr { background-position: -64px 0; width: 32px; height: 32px; }
+.ui-panel-l { background-position: 0 -32px; width: 32px; height: 32px; }
+.ui-panel-c { background-position: -32px -32px; width: 32px; height: 32px; }
+.ui-panel-r { background-position: -64px -32px; width: 32px; height: 32px; }
+.ui-panel-bl { background-position: 0 -64px; width: 32px; height: 32px; }
+.ui-panel-b { background-position: -32px -64px; width: 32px; height: 32px; }
+.ui-panel-br { background-position: -64px -64px; width: 32px; height: 32px; }
+
+/* =====================================================
+   Item Slot Frames
+   Row 2-3 area, various slot styles
+   ===================================================== */
+
+/* Basic item slot - empty */
+.ui-slot {
+  background-image: var(--ui-sprite);
+  background-position: -128px 0;
+  width: 32px;
+  height: 32px;
+  image-rendering: pixelated;
+}
+
+/* Item slot - selected/highlighted */
+.ui-slot-selected {
+  background-image: var(--ui-sprite);
+  background-position: -160px 0;
+  width: 32px;
+  height: 32px;
+  image-rendering: pixelated;
+}
+
+/* =====================================================
+   Icons - Row starting around y:32-64
+   Gems, potions, food, etc.
+   ===================================================== */
+
+.ui-icon {
+  background-image: var(--ui-sprite);
+  width: 32px;
+  height: 32px;
+  image-rendering: pixelated;
+  display: inline-block;
+}
+
+/* Gems/Crystals - around x:128, y:32 */
+.ui-icon-gem-blue { background-position: -128px -32px; }
+.ui-icon-gem-green { background-position: -160px -32px; }
+.ui-icon-gem-red { background-position: -192px -32px; }
+.ui-icon-gem-purple { background-position: -224px -32px; }
+.ui-icon-gem-yellow { background-position: -256px -32px; }
+
+/* Potions - around x:128, y:64 */
+.ui-icon-potion-red { background-position: -128px -64px; }
+.ui-icon-potion-blue { background-position: -160px -64px; }
+.ui-icon-potion-green { background-position: -192px -64px; }
+.ui-icon-potion-yellow { background-position: -224px -64px; }
+
+/* Food items */
+.ui-icon-apple { background-position: -256px -64px; }
+.ui-icon-meat { background-position: -288px -64px; }
+.ui-icon-bread { background-position: -320px -64px; }
+
+/* Stars/Rating */
+.ui-icon-star-empty { background-position: -192px -32px; }
+.ui-icon-star-full { background-position: -224px -32px; }
+
+/* Coins - around y:192 */
+.ui-icon-coin-gold { background-position: -128px -192px; }
+.ui-icon-coin-silver { background-position: -160px -192px; }
+
+/* =====================================================
+   Progress Bars - Multiple styles available
+   Around x:320-480, y:64-160
+   ===================================================== */
+
+/* HP Bar style - red fill */
+.ui-bar-hp-empty {
+  background-image: var(--ui-sprite);
+  background-position: -352px -96px;
+  height: 16px;
+  image-rendering: pixelated;
+}
+
+.ui-bar-hp-fill {
+  background-image: var(--ui-sprite);
+  background-position: -352px -80px;
+  height: 16px;
+  image-rendering: pixelated;
+}
+
+/* XP Bar style - green fill */
+.ui-bar-xp-empty {
+  background-image: var(--ui-sprite);
+  background-position: -352px -128px;
+  height: 16px;
+  image-rendering: pixelated;
+}
+
+.ui-bar-xp-fill {
+  background-image: var(--ui-sprite);
+  background-position: -352px -112px;
+  height: 16px;
+  image-rendering: pixelated;
+}
+
+/* =====================================================
+   Buttons - Various states
+   Located in middle-left area
+   ===================================================== */
+
+/* Standard button */
+.ui-btn {
+  background-image: var(--ui-sprite);
+  background-position: -128px -160px;
+  min-width: 64px;
+  height: 32px;
+  image-rendering: pixelated;
+  border: none;
+  cursor: pointer;
+  font-family: var(--font-display);
+  color: var(--text-dark);
+}
+
+.ui-btn:hover {
+  background-position: -192px -160px;
+}
+
+.ui-btn:active {
+  background-position: -256px -160px;
+}
+
+/* =====================================================
+   Checkboxes and Radio Buttons
+   Around x:128, y:128
+   ===================================================== */
+
+.ui-checkbox {
+  background-image: var(--ui-sprite);
+  width: 16px;
+  height: 16px;
+  image-rendering: pixelated;
+  display: inline-block;
+  cursor: pointer;
+}
+
+.ui-checkbox-unchecked { background-position: -128px -144px; }
+.ui-checkbox-checked { background-position: -144px -144px; }
+
+/* =====================================================
+   Hearts/HP Icons
+   Style 2 has better heart icons
+   ===================================================== */
+
+.ui-heart {
+  background-image: var(--ui-sprite-2);
+  width: 16px;
+  height: 16px;
+  image-rendering: pixelated;
+  display: inline-block;
+}
+
+.ui-heart-full { background-position: -256px -96px; }
+.ui-heart-half { background-position: -272px -96px; }
+.ui-heart-empty { background-position: -288px -96px; }
+
+/* =====================================================
+   Inventory Grid Helper
+   ===================================================== */
+
+.ui-inventory-grid {
+  display: grid;
+  gap: 4px;
+  grid-template-columns: repeat(auto-fill, 36px);
+}
+
+.ui-inventory-slot {
+  width: 36px;
+  height: 36px;
+  background-image: var(--ui-sprite);
+  background-position: -128px 0;
+  background-size: 1952px 1376px; /* Original spritesheet size */
+  image-rendering: pixelated;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.ui-inventory-slot:hover {
+  background-position: -160px 0;
+}
+
+.ui-inventory-slot.selected {
+  background-position: -160px 0;
+  box-shadow: 0 0 8px var(--accent-gold);
+}
+
+/* =====================================================
+   Window/Modal with sprite background
+   ===================================================== */
+
+.ui-window {
+  background-color: #d4c4a8;
+  border: 4px solid #8b7355;
+  border-radius: 4px;
+  box-shadow:
+    inset 2px 2px 0 #e8dcc8,
+    inset -2px -2px 0 #6b5344,
+    4px 4px 0 rgba(0,0,0,0.3);
+  image-rendering: pixelated;
+}
+
+.ui-window-header {
+  background: linear-gradient(180deg, #c9a959 0%, #a08040 100%);
+  padding: 8px 12px;
+  border-bottom: 2px solid #8b7355;
+  font-family: var(--font-display);
+  color: #3d2914;
+  text-transform: uppercase;
+  font-size: 14px;
+}
+
+.ui-window-body {
+  padding: 12px;
+  background: #e8dcc8;
+}
+
+/* =====================================================
+   Utility Classes
+   ===================================================== */
+
+.pixelated {
+  image-rendering: pixelated;
+  image-rendering: -moz-crisp-edges;
+  image-rendering: crisp-edges;
+}

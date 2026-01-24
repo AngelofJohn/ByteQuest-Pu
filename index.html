@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ByteQuest - RPG Language Learning</title>
+    <link rel="stylesheet" href="css/ui-sprites.css">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚔️</text></svg>">
+</head>
+<body>
+    <!-- =====================================================
+         Title Screen
+         ===================================================== -->
+    <div id="title-screen">
+        <div class="title-logo">ByteQuest</div>
+        <div class="title-subtitle" id="title-subtitle">Learn Languages Through Adventure</div>
+
+        <!-- Main Menu - shown by default -->
+        <div class="title-menu" id="main-menu">
+            <button class="art-btn art-btn-large art-btn-gold" id="new-game-btn">New Game</button>
+            <button class="art-btn art-btn-large" id="continue-btn">Continue</button>
+        </div>
+
+        <!-- Course Selection Panel - shown when New Game or Continue is clicked -->
+        <div id="course-panel" style="display: none;">
+            <div class="course-panel-header">MY COURSES</div>
+            <div id="course-list">
+                <!-- Courses will be rendered here dynamically -->
+            </div>
+            <button class="course-add-btn" id="add-course-btn">
+                <span class="course-add-icon">+</span>
+                <span>Add a new course</span>
+            </button>
+            <button class="art-btn art-btn-small" id="back-to-main-menu-btn" style="margin-top: 12px; width: 100%;">Back</button>
+        </div>
+
+        <div style="position: absolute; bottom: 40px; color: var(--text-muted); font-size: 14px;">
+            Phase 1 - Dawnmere Vertical Slice
+        </div>
+    </div>
+
+    <!-- Language Selection Modal -->
+    <div id="language-select-modal" class="modal-overlay">
+        <div class="modal-content pixel-border" style="max-width: 500px;">
+            <div class="modal-header">Choose a Language to Learn</div>
+            <div id="language-options" class="language-grid">
+                <!-- Language options rendered dynamically -->
+            </div>
+            <button class="pixel-btn" onclick="hideModal('language-select-modal')">Cancel</button>
+        </div>
+    </div>
+
+    <!-- =====================================================
+         Main Game Container
+         ===================================================== -->
+    <div id="game-container" style="display: none;">
+        <!-- Top HUD -->
+        <div id="top-hud">
+            <div class="player-info">
+                <div class="player-avatar" data-tooltip="player-avatar" onclick="handleNavigation('profile')" style="cursor: pointer;">🧙</div>
+                <div class="player-stats">
+                    <div class="player-name">Traveler</div>
+                    <div class="player-level" data-tooltip="player-level">Level 1</div>
+                </div>
+                <div class="stat-bars">
+                    <div class="stat-bar hp-bar" data-tooltip="hp-bar">
+                        <span class="stat-label">HP</span>
+                        <div class="bar-container">
+                            <div class="bar-fill" style="width: 100%"></div>
+                        </div>
+                        <span class="stat-value">100/100</span>
+                    </div>
+                    <div class="stat-bar xp-bar" data-tooltip="xp-bar">
+                        <span class="stat-label">XP</span>
+                        <div class="bar-container">
+                            <div class="bar-fill" style="width: 0%"></div>
+                        </div>
+                        <span class="stat-value">0/100</span>
+                    </div>
+                </div>
+                <div class="active-effects-container" id="active-effects">
+                    <!-- Active potion/buff effects displayed here -->
+                </div>
+            </div>
+            <div class="currency-display">
+                <div class="currency gold" data-tooltip="gold-display">
+                    <span class="currency-icon art-icon-coin"></span>
+                    <span class="currency-value">0</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content Area -->
+        <div id="main-content">
+            <!-- Left Sidebar - Navigation -->
+            <div id="left-sidebar">
+                <button class="nav-btn" data-screen="profile">
+                    <span class="nav-icon">👤</span>
+                    Profile
+                </button>
+                <button class="nav-btn" data-screen="spellbook">
+                    <span class="nav-icon">📖</span>
+                    Spellbook
+                </button>
+                <button class="nav-btn" data-screen="inventory">
+                    <span class="nav-icon">🎒</span>
+                    Inventory
+                </button>
+                <button class="nav-btn" data-screen="progress">
+                    <span class="nav-icon">📊</span>
+                    Progress
+                </button>
+                <button class="nav-btn" data-screen="practice">
+                    <span class="nav-icon">🔄</span>
+                    Practice
+                </button>
+                <button class="nav-btn" data-screen="quests">
+                    <span class="nav-icon">📜</span>
+                    Quests
+                </button>
+                <button class="nav-btn" data-screen="map">
+                    <span class="nav-icon">🗺️</span>
+                    Map
+                </button>
+                <button class="nav-btn" data-screen="gather">
+                    <span class="nav-icon">⛏️</span>
+                    Gather
+                </button>
+                <button class="nav-btn" data-screen="projects">
+                    <span class="nav-icon">🏘️</span>
+                    Projects
+                </button>
+                <button class="nav-btn feature-locked" data-screen="crafting" data-feature="alchemy" style="display: none;">
+                    <span class="nav-icon">🔨</span>
+                    Crafting
+                </button>
+                <button class="nav-btn" data-screen="upgrades">
+                    <span class="nav-icon">⭐</span>
+                    Upgrades
+                </button>
+                <div style="flex: 1;"></div>
+                <button class="nav-btn" data-screen="settings">
+                    <span class="nav-icon">⚙️</span>
+                    Settings
+                </button>
+                <button class="nav-btn" data-screen="save">
+                    <span class="nav-icon">💾</span>
+                    Save
+                </button>
+            </div>
+
+            <!-- Center - Game View -->
+            <div id="game-view">
+                <!-- Location Header -->
+                <div id="location-header">
+                    <div>
+                        <div class="location-name">Dawnmere</div>
+                        <div class="location-desc">A small frontier settlement seeking prosperity.</div>
+                    </div>
+                </div>
+
+                <!-- Game Scene -->
+                <div id="game-scene">
+                    <!-- NPCs rendered here -->
+                    <div id="scene-npcs"></div>
+
+                    <!-- Exploration Hotspots rendered here -->
+                    <div id="scene-hotspots"></div>
+
+                    <!-- Dialog Box -->
+                    <div id="dialog-box">
+                        <div class="dialog-speaker">NPC Name</div>
+                        <div class="dialog-text">Dialog text goes here...</div>
+                        <div class="dialog-options">
+                            <!-- Options rendered dynamically -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- =====================================================
+         Lesson Modal
+         ===================================================== -->
+    <div id="lesson-modal" class="modal-overlay">
+        <div class="modal-content pixel-border" style="width: 700px; text-align: center;">
+            <div class="lesson-header">
+                <button class="lesson-exit-btn" onclick="confirmExitLesson()" title="Exit Lesson">✕</button>
+                <button class="spellbook-panel-toggle" id="spellbook-panel-toggle-btn" style="display: none;" onclick="toggleLessonSpellbookPanel()" title="Toggle Spellbook">📖</button>
+                <div class="lesson-title">📚 FRENCH LESSON</div>
+                <div class="lesson-progress">
+                    <!-- Progress dots rendered dynamically -->
+                </div>
+            </div>
+
+            <!-- Main content wrapper for two-column layout -->
+            <div class="lesson-main-content">
+                <!-- Streak & Multiplier Display -->
+                <div class="streak-display">
+                    <div class="streak-counter">
+                        <span class="streak-flame">💫</span>
+                        <span class="streak-number">0</span>
+                    </div>
+                    <div class="multiplier-display">
+                        <span class="multiplier-value">1x</span>
+                        <span class="multiplier-progress">0/3</span>
+                    </div>
+                </div>
+
+                <div class="question-container">
+                    <div class="question-prompt">What does this mean?</div>
+                    <div class="question-word">le mot</div>
+                </div>
+
+                <div class="answer-options">
+                    <!-- Answers rendered dynamically -->
+                </div>
+
+                <div class="hint-box">
+                    💡 Hint: Click for a hint
+                </div>
+
+                <div class="lesson-feedback"></div>
+            </div>
+
+            <!-- Spellbook side panel (Scholar's Focus upgrade) -->
+            <div class="lesson-spellbook-panel" id="lesson-spellbook-panel" style="display: none;">
+                <div class="spellbook-panel-collapsed-icon" onclick="toggleLessonSpellbookPanel()">
+                    📖
+                </div>
+                <div class="spellbook-panel-header">SPELLBOOK</div>
+                <div class="spellbook-panel-tabs" id="spellbook-panel-tabs">
+                    <!-- Tabs rendered dynamically -->
+                </div>
+                <div class="spellbook-panel-content" id="spellbook-panel-content">
+                    <!-- Content rendered dynamically -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- =====================================================
+         Spellbook Modal
+         ===================================================== -->
+    <div id="spellbook-modal" class="modal-overlay">
+        <div class="modal-content pixel-border">
+            <div class="spellbook-header">
+                <div class="spellbook-title">
+                    <span>📖</span>
+                    <span>SPELLBOOK</span>
+                </div>
+                <button class="spellbook-close" onclick="hideSpellbook()">&times;</button>
+            </div>
+            <div class="spellbook-body">
+                <div class="spellbook-toc">
+                    <!-- Table of contents rendered dynamically -->
+                </div>
+                <div class="spellbook-content">
+                    <!-- Page content rendered dynamically -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- =====================================================
+         Scripts
+         ===================================================== -->
+
+    <!-- Data -->
+    <script src="data/gamedata.js"></script>
+    <script src="data/artifacts.js"></script>
+    <script src="data/resourceDefinitions.js"></script>
+    <script src="data/courses/manifest.js"></script>
+
+    <!-- French Course Data -->
+    <script src="data/courses/french/vocab.js"></script>
+    <script src="data/courses/french/grammar.js"></script>
+    <script src="data/courses/french/mainStoryQuests.js"></script>
+    <script src="data/courses/french/sideQuests.js"></script>
+    <script src="data/courses/french/grammarQuests.js"></script>
+    <script src="data/courses/french/quests.js"></script>
+    <script src="data/courses/french/spellbook.js"></script>
+
+    <!-- Core -->
+    <script src="js/core/gameState.js"></script>
+    <script src="js/systems/utilities.js"></script>
+
+    <!-- Systems -->
+    <script src="js/systems/xpSystem.js"></script>
+    <script src="js/systems/courseLoader.js"></script>
+    <script src="js/systems/courseManager.js"></script>
+    <script src="js/systems/grammarSystem.js"></script>
+    <script src="js/systems/questionSystem.js"></script>
+    <script src="js/systems/streakSystem.js"></script>
+    <script src="js/systems/leitnerSystem.js"></script>
+    <script src="js/systems/vocabularyMasterySystem.js"></script>
+    <script src="js/systems/lessonSystem.js"></script>
+    <script src="js/systems/languageSystem.js"></script>
+    <script src="js/systems/questSystem.js"></script>
+    <script src="js/systems/specializationSystem.js"></script>
+    <script src="js/systems/npcSystem.js"></script>
+    <script src="js/systems/npcMarkerSystem.js"></script>
+    <script src="js/systems/memoryShrineSystem.js"></script>
+    <script src="js/systems/milestoneSystem.js"></script>
+    <script src="js/systems/statsSystem.js"></script>
+    <script src="js/systems/achievementSystem.js"></script>
+    <script src="js/systems/currencySystem.js"></script>
+    <script src="js/systems/reputationSystem.js"></script>
+    <script src="js/systems/itemSystem.js"></script>
+    <script src="js/systems/shopSystem.js"></script>
+    <script src="js/systems/bossExamSystem.js"></script>
+    <script src="js/systems/tooltipSystem.js"></script>
+    <script src="js/systems/languageSpellbook.js"></script>
+    <script src="js/systems/spellbookSystem.js"></script>
+    <script src="js/systems/artifactSystem.js"></script>
+    <script src="js/systems/hotspotSystem.js"></script>
+    <script src="js/systems/villageProjectSystem.js"></script>
+    <script src="js/systems/resourceMinigameSystem.js"></script>
+    <script src="js/systems/alchemySystem.js"></script>
+    <script src="js/systems/smithingSystem.js"></script>
+    <script src="js/systems/locationSystem.js"></script>
+    <script src="js/systems/craftingSystem.js"></script>
+    <script src="js/systems/enchantingSystem.js"></script>
+    <script src="js/systems/cosmeticSystem.js"></script>
+    <script src="js/systems/tutorialSystem.js"></script>
+
+    <!-- Account Progression -->
+    <script src="js/systems/accountProgressionConfig.js"></script>
+    <script src="js/systems/accountProgressionSystem.js"></script>
+    <script src="js/ui/accountProgressionUI.js"></script>
+
+    <!-- UI -->
+    <script src="js/ui/uiCore.js"></script>
+    <script src="js/ui/cutsceneSystem.js"></script>
+    <script src="js/ui/titleScreen.js"></script>
+    <script src="js/ui/profileScreens.js"></script>
+    <script src="js/ui/questUI.js"></script>
+    <script src="js/ui/craftingUI.js"></script>
+    <script src="js/ui/accountUpgradeUI.js"></script>
+    <script src="js/ui/shopUI.js"></script>
+    <script src="js/ui/sidebarScreens.js"></script>
+    <script src="js/ui/practiceUI.js"></script>
+
+    <!-- Initialization (must be last) -->
+    <script src="js/core/initialization.js"></script>
+</body>
+</html>

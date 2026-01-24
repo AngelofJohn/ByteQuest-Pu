@@ -1,0 +1,632 @@
+// ByteQuest - Location System
+// Phase 2: Location infrastructure, travel, map
+
+// =====================================================
+// Location Definitions
+// =====================================================
+
+const LOCATION_DEFINITIONS = {
+  dawnmere: {
+    id: 'dawnmere',
+    name: 'Dawnmere',
+    world: 1,  // World 1
+    description: 'A small frontier settlement seeking prosperity along the trade routes.',
+    levelRequired: 1,
+    connections: ['haari_fields'],
+    icon: '🏘️',
+    color: '#a0785a',
+    bgGradient: ['#1a3a5c', '#2a5a3c', '#3a6a4c'], // Sky to ground colors
+    themes: ['community', 'beginnings'],
+    npcs: ['elder_maren', 'isora', 'rega', 'merchant', 'baker', 'brother_varek', 'tommen', 'old_jorel', 'settlers_rep'],
+    // Quests are managed by QuestManager/CourseDataManager, not hardcoded here
+    quests: [],
+    hotspots: [
+      {
+        id: 'dawnmere_empty_shrine',
+        name: 'Abandoned Shrine',
+        icon: '🏛️',
+        description: 'A small stone shrine, overgrown and forgotten at the edge of the village.',
+        discoveryText: 'Behind the crumbling altar, you find a fragment of carved stone that predates the settlement by centuries...',
+        hint: 'Something glints in the shadows',
+        artifact: 'silence_empty_shrine',
+        requires: { level: 3 },
+        xp: 25
+      }
+    ]
+  },
+
+  haari_fields: {
+    id: 'haari_fields',
+    name: 'The Haari Fields',
+    world: 2,  // World 2
+    description: 'Golden wheat-colored fields stretch north toward Lurenium. Boar-like creatures roam the wild edges.',
+    levelRequired: 2,
+    connections: ['dawnmere', 'lurenium'],
+    icon: '🌾',
+    color: '#c9a227',
+    bgGradient: ['#87ceeb', '#f4d03f', '#8b7355'],
+    themes: ['agriculture', 'nature'],
+    npcs: ['dave', 'lyra', 'venn', 'rask', 'the_veiled_one', 'sage_aldric'],
+    // Quests are managed by QuestManager/CourseDataManager, not hardcoded here
+    quests: [],
+    hotspots: [
+      {
+        id: 'haari_standing_stones',
+        name: 'Standing Stones',
+        icon: '🗿',
+        description: 'Ancient stones arranged in a circle at the edge of the fields. Farmers avoid them.',
+        discoveryText: 'As you approach, you notice one stone bears a single carved symbol—a warning that has waited millennia to be read...',
+        hint: 'The stones hum faintly',
+        artifact: 'ancient_warning_stone',
+        requires: { level: 5 },
+        xp: 50,
+        reputation: { dawnmere: 10 }
+      },
+      {
+        id: 'haari_battlefield_remnants',
+        name: 'Old Battlefield',
+        icon: '⚔️',
+        description: 'A patch of barren ground where nothing grows. The locals say a battle was fought here long ago.',
+        discoveryText: 'Beneath a rusted helm, you find a letter that never reached home...',
+        hint: 'Rusted metal catches your eye',
+        artifact: 'war_soldiers_letter',
+        requires: { level: 8, quest: 'ms_1_09_darkness_at_the_edge' },
+        xp: 75
+      }
+    ]
+  },
+
+  lurenium: {
+    id: 'lurenium',
+    name: 'Lurenium',
+    world: 3,  // World 3
+    description: 'An ancient city of gold, built before the time of the current world. Its citizens preserve foundations they no longer understand.',
+    levelRequired: 10,
+    connections: ['haari_fields'],
+    icon: '🏛️',
+    color: '#ffd700',
+    bgGradient: ['#1a1a2e', '#2a2a4e', '#c9a227'],
+    themes: ['history', 'mystery', 'architecture'],
+    npcs: ['magistrate_corinne', 'archivist_thelon', 'captain_varro', 'merchant_liselle', 'brother_cassius', 'old_jorel'],
+    quests: [],
+    hasBossExam: true,
+    hotspots: [
+      {
+        id: 'lurenium_library_vault',
+        name: 'Hidden Library Vault',
+        icon: '📚',
+        description: 'A concealed door behind the main archives, noticed only by those who know to look.',
+        discoveryText: 'The vault contains architectural plans that reveal hidden chambers beneath the city—chambers that appear on no official record...',
+        hint: 'The wall seems too thick here',
+        artifact: 'golden_architects_note',
+        requires: { level: 12, quest: 'ms_3_08_the_sealed_archives' },
+        xp: 100,
+        gold: 50
+      }
+    ]
+  }
+};
+
+// =====================================================
+// Location Manager Class
+// =====================================================
+
+class LocationManager {
+  constructor(gameState) {
+    this.state = gameState;
+    this.locations = { ...LOCATION_DEFINITIONS };
+    this.initializePlayerLocations();
+  }
+
+  // ===================================================
+  // Initialization
+  // ===================================================
+
+  /**
+   * Initialize player location tracking
+   */
+  initializePlayerLocations() {
+    if (!this.state.player.locations) {
+      this.state.player.locations = {
+        current: 'dawnmere',
+        discovered: ['dawnmere'],
+        unlocked: ['dawnmere'],
+        visitedRoutes: []
+      };
+    }
+    // Ensure all required fields exist for older saves
+    if (!this.state.player.locations.discovered) {
+      this.state.player.locations.discovered = ['dawnmere'];
+    }
+    if (!this.state.player.locations.unlocked) {
+      this.state.player.locations.unlocked = ['dawnmere'];
+    }
+    if (!this.state.player.locations.visitedRoutes) {
+      this.state.player.locations.visitedRoutes = [];
+    }
+    // Ensure dawnmere is always unlocked (starting location)
+    if (!this.state.player.locations.unlocked.includes('dawnmere')) {
+      this.state.player.locations.unlocked.push('dawnmere');
+    }
+    if (!this.state.player.locations.discovered.includes('dawnmere')) {
+      this.state.player.locations.discovered.push('dawnmere');
+    }
+  }
+
+  // ===================================================
+  // Location Access
+  // ===================================================
+
+  /**
+   * Get location definition by ID
+   */
+  getLocation(locationId) {
+    return this.locations[locationId] || null;
+  }
+
+  /**
+   * Get all location definitions
+   */
+  getAllLocations() {
+    return Object.values(this.locations);
+  }
+
+  /**
+   * Get current location
+   */
+  getCurrentLocation() {
+    const currentId = this.state.player.locations?.current || 'dawnmere';
+    return this.getLocation(currentId);
+  }
+
+  /**
+   * Get current location ID
+   */
+  getCurrentLocationId() {
+    return this.state.player.locations?.current || 'dawnmere';
+  }
+
+  // ===================================================
+  // Discovery & Unlocking
+  // ===================================================
+
+  /**
+   * Check if a location has been discovered
+   */
+  isDiscovered(locationId) {
+    return this.state.player.locations?.discovered?.includes(locationId) || false;
+  }
+
+  /**
+   * Check if a location is unlocked (can travel to)
+   */
+  isUnlocked(locationId) {
+    return this.state.player.locations?.unlocked?.includes(locationId) || false;
+  }
+
+  /**
+   * Check if player meets level requirement for a location
+   */
+  meetsLevelRequirement(locationId) {
+    const location = this.getLocation(locationId);
+    if (!location) return false;
+    return this.state.player.level >= location.levelRequired;
+  }
+
+  /**
+   * Discover a location (add to map, but may not be unlocked)
+   */
+  discoverLocation(locationId) {
+    const location = this.getLocation(locationId);
+    if (!location) return { success: false, message: 'Location not found' };
+    
+    if (this.isDiscovered(locationId)) {
+      return { success: false, message: 'Location already discovered' };
+    }
+    
+    this.state.player.locations.discovered.push(locationId);
+    
+    // Auto-unlock if meets requirements
+    if (this.meetsLevelRequirement(locationId)) {
+      this.unlockLocation(locationId);
+    }
+    
+    return {
+      success: true,
+      message: `Discovered: ${location.name}`,
+      location
+    };
+  }
+
+  /**
+   * Unlock a location (allow travel)
+   */
+  unlockLocation(locationId) {
+    const location = this.getLocation(locationId);
+    if (!location) return { success: false, message: 'Location not found' };
+    
+    if (this.isUnlocked(locationId)) {
+      return { success: false, message: 'Location already unlocked' };
+    }
+    
+    // Must be discovered first
+    if (!this.isDiscovered(locationId)) {
+      this.discoverLocation(locationId);
+    }
+    
+    this.state.player.locations.unlocked.push(locationId);
+    
+    return {
+      success: true,
+      message: `Unlocked: ${location.name}`,
+      location
+    };
+  }
+
+  /**
+   * Check why a location is locked
+   */
+  getLockedReason(locationId) {
+    const location = this.getLocation(locationId);
+    if (!location) return 'Location not found';
+    
+    if (!this.isDiscovered(locationId)) {
+      return 'Not yet discovered';
+    }
+    
+    if (!this.meetsLevelRequirement(locationId)) {
+      return `Requires level ${location.levelRequired}`;
+    }
+    
+    // Could add more conditions here (quest requirements, etc.)
+    
+    return null; // No reason - should be unlockable
+  }
+
+  // ===================================================
+  // Travel
+  // ===================================================
+
+  /**
+   * Generate a route key for two locations (order-independent)
+   */
+  getRouteKey(fromId, toId) {
+    // Sort alphabetically to ensure same key regardless of direction
+    const sorted = [fromId, toId].sort();
+    return `${sorted[0]}->${sorted[1]}`;
+  }
+
+  /**
+   * Check if a route has been traveled before
+   */
+  hasVisitedRoute(fromId, toId) {
+    const routeKey = this.getRouteKey(fromId, toId);
+    return this.state.player.locations.visitedRoutes?.includes(routeKey) || false;
+  }
+
+  /**
+   * Mark a route as visited
+   */
+  markRouteVisited(fromId, toId) {
+    const routeKey = this.getRouteKey(fromId, toId);
+    if (!this.state.player.locations.visitedRoutes) {
+      this.state.player.locations.visitedRoutes = [];
+    }
+    if (!this.state.player.locations.visitedRoutes.includes(routeKey)) {
+      this.state.player.locations.visitedRoutes.push(routeKey);
+    }
+  }
+
+  /**
+   * Check if player can travel to a location
+   */
+  canTravelTo(locationId) {
+    // Must be unlocked
+    if (!this.isUnlocked(locationId)) {
+      return { canTravel: false, reason: this.getLockedReason(locationId) };
+    }
+
+    // Must be connected to current location OR use fast travel (map)
+    // For now, allow travel to any unlocked location
+    return { canTravel: true };
+  }
+
+  /**
+   * Travel to a location
+   * @param {string} locationId - Destination location ID
+   * @param {boolean} fastTravel - If true, skip encounters (for already-visited routes)
+   */
+  travelTo(locationId, fastTravel = false) {
+    const check = this.canTravelTo(locationId);
+    if (!check.canTravel) {
+      return { success: false, message: check.reason };
+    }
+
+    const previousLocation = this.getCurrentLocationId();
+    const newLocation = this.getLocation(locationId);
+    const isFirstVisit = !this.hasVisitedRoute(previousLocation, locationId);
+
+    // Mark route as visited
+    this.markRouteVisited(previousLocation, locationId);
+
+    // Ensure player.locations exists before updating
+    if (!this.state.player.locations) {
+      this.state.player.locations = {
+        current: locationId,
+        discovered: ['dawnmere'],
+        unlocked: ['dawnmere'],
+        visitedRoutes: []
+      };
+    }
+
+    // Update current location in ALL places for compatibility
+    this.state.player.locations.current = locationId;
+    this.state.currentLocation = locationId;  // Also update GameState.currentLocation
+
+    // Also update the deprecated discoveredLocations array if it exists
+    if (this.state.player.discoveredLocations && !this.state.player.discoveredLocations.includes(locationId)) {
+      this.state.player.discoveredLocations.push(locationId);
+    }
+
+    return {
+      success: true,
+      message: `Traveled to ${newLocation.name}`,
+      previousLocation,
+      newLocation,
+      isFirstVisit,
+      fastTravel
+    };
+  }
+
+  // ===================================================
+  // Connected Locations
+  // ===================================================
+
+  /**
+   * Get locations connected to current location
+   */
+  getConnectedLocations() {
+    const current = this.getCurrentLocation();
+    if (!current || !current.connections) return [];
+    
+    return current.connections
+      .map(id => this.getLocation(id))
+      .filter(loc => loc !== null);
+  }
+
+  /**
+   * Get all discovered locations
+   */
+  getDiscoveredLocations() {
+    const discovered = this.state.player.locations?.discovered || [];
+    return discovered
+      .map(id => this.getLocation(id))
+      .filter(loc => loc !== null);
+  }
+
+  /**
+   * Get all unlocked locations
+   */
+  getUnlockedLocations() {
+    const unlocked = this.state.player.locations?.unlocked || [];
+    return unlocked
+      .map(id => this.getLocation(id))
+      .filter(loc => loc !== null);
+  }
+
+  // ===================================================
+  // Location Status
+  // ===================================================
+
+  /**
+   * Get full status for a location
+   */
+  getLocationStatus(locationId) {
+    const location = this.getLocation(locationId);
+    if (!location) return null;
+    
+    const discovered = this.isDiscovered(locationId);
+    const unlocked = this.isUnlocked(locationId);
+    const meetsLevel = this.meetsLevelRequirement(locationId);
+    const isCurrent = this.getCurrentLocationId() === locationId;
+    
+    return {
+      location,
+      discovered,
+      unlocked,
+      meetsLevel,
+      isCurrent,
+      lockedReason: !unlocked ? this.getLockedReason(locationId) : null
+    };
+  }
+
+  /**
+   * Get status for all locations (for map display)
+   */
+  getAllLocationStatuses() {
+    return Object.keys(this.locations).map(id => this.getLocationStatus(id));
+  }
+
+  // ===================================================
+  // Dynamic Location Management
+  // ===================================================
+
+  /**
+   * Add a new location definition
+   */
+  addLocation(locationData) {
+    if (!locationData.id) {
+      return { success: false, message: 'Location must have an ID' };
+    }
+    
+    if (this.locations[locationData.id]) {
+      return { success: false, message: 'Location ID already exists' };
+    }
+    
+    // Ensure required fields
+    const location = {
+      id: locationData.id,
+      name: locationData.name || 'Unknown Location',
+      description: locationData.description || '',
+      levelRequired: locationData.levelRequired || 1,
+      connections: locationData.connections || [],
+      icon: locationData.icon || '📍',
+      color: locationData.color || '#888888',
+      bgGradient: locationData.bgGradient || ['#1a1a2e', '#2a2a4e', '#3a3a6e'],
+      themes: locationData.themes || [],
+      npcs: locationData.npcs || [],
+      quests: locationData.quests || [],
+      ...locationData
+    };
+    
+    this.locations[location.id] = location;
+    
+    return { success: true, location };
+  }
+
+  /**
+   * Update location connections
+   */
+  addConnection(fromLocationId, toLocationId) {
+    const fromLocation = this.getLocation(fromLocationId);
+    const toLocation = this.getLocation(toLocationId);
+    
+    if (!fromLocation || !toLocation) {
+      return { success: false, message: 'Invalid location ID' };
+    }
+    
+    if (!fromLocation.connections.includes(toLocationId)) {
+      fromLocation.connections.push(toLocationId);
+    }
+    
+    // Make bidirectional
+    if (!toLocation.connections.includes(fromLocationId)) {
+      toLocation.connections.push(fromLocationId);
+    }
+    
+    return { success: true };
+  }
+
+  // ===================================================
+  // Level-Up Check
+  // ===================================================
+
+  /**
+   * Check if any new locations should be unlocked after level up
+   * Call this when player levels up
+   */
+  checkLevelUnlocks() {
+    const newlyUnlocked = [];
+
+    for (const locationId of this.state.player.locations.discovered) {
+      if (!this.isUnlocked(locationId) && this.meetsLevelRequirement(locationId)) {
+        this.unlockLocation(locationId);
+        newlyUnlocked.push(this.getLocation(locationId));
+      }
+    }
+
+    return newlyUnlocked;
+  }
+
+  /**
+   * Check and discover connected locations based on completed quests
+   * This is a recovery method for saves where quests were completed
+   * before the location discovery code was added
+   */
+  checkQuestBasedDiscovery() {
+    const newlyDiscovered = [];
+    const completedQuests = this.state.player.completedQuests || [];
+
+    // Quest -> Location mappings for travel quests
+    const questLocationMap = {
+      // Add quest->location mappings as needed
+    };
+
+    for (const questId of completedQuests) {
+      const locationId = questLocationMap[questId];
+      if (locationId && !this.isDiscovered(locationId)) {
+        const result = this.discoverLocation(locationId);
+        if (result.success) {
+          newlyDiscovered.push(result.location);
+        }
+      }
+    }
+
+    // Also discover connected locations from current location
+    // Discovery happens regardless of level - unlocking requires meeting level requirement
+    const currentLoc = this.getCurrentLocation();
+    console.log('[LocationManager] checkQuestBasedDiscovery - currentLoc:', currentLoc?.id, 'connections:', currentLoc?.connections);
+
+    if (currentLoc?.connections) {
+      for (const connectedId of currentLoc.connections) {
+        console.log('[LocationManager] Checking connection:', connectedId, 'isDiscovered:', this.isDiscovered(connectedId));
+        if (!this.isDiscovered(connectedId)) {
+          const result = this.discoverLocation(connectedId);
+          console.log('[LocationManager] Discover result for', connectedId, ':', result);
+          if (result.success) {
+            newlyDiscovered.push(result.location);
+          }
+        }
+      }
+    } else {
+      console.warn('[LocationManager] No current location or connections found!');
+    }
+
+    console.log('[LocationManager] Newly discovered locations:', newlyDiscovered.map(l => l.id));
+    return newlyDiscovered;
+  }
+}
+
+// =====================================================
+// Helper Functions
+// =====================================================
+
+/**
+ * Get location by ID from definitions
+ */
+function getLocationDefinition(locationId) {
+  return LOCATION_DEFINITIONS[locationId];
+}
+
+// =====================================================
+// Location System Initialization
+// =====================================================
+
+/**
+ * Initialize location system and register locations into GAME_DATA
+ */
+function initLocationSystem() {
+  if (typeof GAME_DATA === 'undefined') {
+    console.warn('[LocationSystem] GAME_DATA not available');
+    return;
+  }
+
+  // Ensure GAME_DATA.locations exists
+  if (!GAME_DATA.locations) {
+    GAME_DATA.locations = {};
+  }
+
+  // Register location definitions
+  Object.assign(GAME_DATA.locations, LOCATION_DEFINITIONS);
+  console.log('[LocationSystem] Registered locations:', Object.keys(LOCATION_DEFINITIONS).join(', '));
+}
+
+// Auto-initialize when script loads
+initLocationSystem();
+
+// Make globally accessible
+window.LOCATION_DEFINITIONS = LOCATION_DEFINITIONS;
+window.initLocationSystem = initLocationSystem;
+
+// =====================================================
+// Export
+// =====================================================
+
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = {
+    LOCATION_DEFINITIONS,
+    LocationManager,
+    getLocationDefinition,
+    initLocationSystem
+  };
+}
