@@ -145,12 +145,12 @@ const TITLE_DEFINITIONS = {
     source: 'class',
     color: '#3498db'
   },
-  pathfinder: {
-    id: 'pathfinder',
-    name: 'Pathfinder',
-    description: 'Joined the Order of Pilgrimage',
+  rogue: {
+    id: 'rogue',
+    name: 'Rogue',
+    description: 'Embraced the way of cunning and fortune',
     source: 'class',
-    color: '#27ae60'
+    color: '#9b59b6'
   },
 
   // Special titles

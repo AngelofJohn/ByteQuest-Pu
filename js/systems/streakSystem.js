@@ -1,5 +1,6 @@
 // ByteQuest - Streak System
 // Tracks answer streaks and multipliers for lessons
+// NOTE: Streaks are locked behind the 'streak_system' purchasable upgrade
 
 const StreakSystem = {
   // Current session state
@@ -17,13 +18,45 @@ const StreakSystem = {
   },
 
   /**
+   * Check if streak system is unlocked via account progression
+   * @returns {boolean} Whether streaks are enabled
+   */
+  isUnlocked() {
+    if (typeof accountProgressionManager !== 'undefined' && accountProgressionManager.hasUpgrade) {
+      return accountProgressionManager.hasUpgrade('streak_system');
+    }
+    return false;
+  },
+
+  /**
+   * Check if streak persistence is unlocked (streaks carry across lessons)
+   * @returns {boolean} Whether streaks persist between lessons
+   */
+  hasPersistence() {
+    if (typeof accountProgressionManager !== 'undefined' && accountProgressionManager.hasUpgrade) {
+      return accountProgressionManager.hasUpgrade('streak_persistence');
+    }
+    return false;
+  },
+
+  /**
    * Initialize streak tracking for a new lesson
+   * If streak persistence is unlocked, maintains current streak
    */
   startLesson() {
+    // If persistence upgrade is owned, keep the current streak
+    if (this.hasPersistence() && this.currentStreak > 0) {
+      console.log(`[StreakSystem] Lesson started, streak persisted: ${this.currentStreak}. Unlocked: ${this.isUnlocked()}`);
+      // Just reset session max, keep streak and multiplier
+      this.maxStreakThisSession = this.currentStreak;
+      return;
+    }
+
+    // Normal behavior: reset everything
     this.currentStreak = 0;
     this.maxStreakThisSession = 0;
     this.multiplier = 1;
-    console.log('[StreakSystem] Lesson started, streak reset');
+    console.log('[StreakSystem] Lesson started, streak reset. Unlocked:', this.isUnlocked());
   },
 
   /**
@@ -31,6 +64,17 @@ const StreakSystem = {
    * @returns {object} Streak info including multiplier changes
    */
   recordCorrect() {
+    // If streaks not unlocked, return base values
+    if (!this.isUnlocked()) {
+      return {
+        currentStreak: 0,
+        multiplier: 1,
+        multiplierIncreased: false,
+        isNewRecord: false,
+        locked: true
+      };
+    }
+
     this.currentStreak++;
 
     // Track max streak this session
@@ -189,6 +233,21 @@ const StreakSystem = {
    * @returns {object} Current streak state
    */
   getStreakInfo() {
+    const unlocked = this.isUnlocked();
+
+    // If not unlocked, return locked state
+    if (!unlocked) {
+      return {
+        current: 0,
+        max: 0,
+        globalMax: 0,
+        multiplier: 1,
+        nextThreshold: null,
+        progressToNext: 0,
+        locked: true
+      };
+    }
+
     // Calculate progress to next multiplier
     let nextThreshold = null;
     let progressToNext = 0;
@@ -212,7 +271,9 @@ const StreakSystem = {
       globalMax: GameState.player?.longestStreak || 0,
       multiplier: this.multiplier,
       nextThreshold,
-      progressToNext
+      progressToNext,
+      locked: false,
+      persistent: this.hasPersistence()
     };
   },
 
@@ -222,6 +283,10 @@ const StreakSystem = {
    * @returns {number} XP with multiplier applied
    */
   applyMultiplier(baseXP) {
+    // If streaks not unlocked, return base XP (no multiplier)
+    if (!this.isUnlocked()) {
+      return baseXP;
+    }
     return Math.floor(baseXP * this.multiplier);
   }
 };

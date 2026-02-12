@@ -96,6 +96,7 @@ const PracticeUI = {
   _renderPracticeTab(stats) {
     const dueCount = stats.dueForReview;
     const canPractice = dueCount >= 4;
+    const canChallenge = stats.totalWords >= 4;
     const breakdownHtml = this._renderMasteryBreakdown(stats.breakdown);
 
     return `
@@ -131,6 +132,26 @@ const PracticeUI = {
               : `Only ${dueCount} word${dueCount !== 1 ? 's' : ''} due. Need at least 4.`}
           </div>
         `}
+      </div>
+
+      <div class="practice-challenges">
+        <h3>🧘 Practice Challenges</h3>
+        <p class="challenges-intro">Train your vocabulary with focused meditation</p>
+        <div class="challenge-modes">
+          <button class="challenge-mode-btn ${canChallenge ? '' : 'disabled'}" onclick="${canChallenge ? "PracticeUI.startChallenge('streak')" : ''}">
+            <span class="mode-icon">🔥</span>
+            <span class="mode-name">Meditation of Persistence</span>
+            <span class="mode-desc">Build streaks for bonus XP</span>
+          </button>
+          <button class="challenge-mode-btn ${canChallenge ? '' : 'disabled'}" onclick="${canChallenge ? "PracticeUI.startChallenge('speed')" : ''}">
+            <span class="mode-icon">⚡</span>
+            <span class="mode-name">Trial of Swiftness</span>
+            <span class="mode-desc">Answer fast to beat the clock</span>
+          </button>
+        </div>
+        ${!canChallenge ? `
+          <div class="challenge-locked">Learn at least 4 words to unlock challenges</div>
+        ` : ''}
       </div>
     `;
   },
@@ -384,6 +405,26 @@ const PracticeUI = {
         }).join('')}
       </div>
     `;
+  },
+
+  /**
+   * Start a practice challenge (Streak or Speed mode)
+   */
+  startChallenge(modeId) {
+    if (typeof practiceManager === 'undefined') {
+      // Initialize practice manager if not already done
+      if (typeof initPracticeSystem === 'function') {
+        initPracticeSystem();
+      } else {
+        showNotification('Practice system not available', 'error');
+        return;
+      }
+    }
+
+    hideModal('practice-modal');
+    setTimeout(() => {
+      practiceManager.startPractice(modeId);
+    }, 100);
   },
 
   /**

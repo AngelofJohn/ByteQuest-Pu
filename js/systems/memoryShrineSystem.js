@@ -783,6 +783,127 @@ class MemoryShrineManager {
 
     return { monuments, shards, canBuildAny };
   }
+
+  // ===================================================
+  // Blessings UI
+  // ===================================================
+
+  showBlessingsUI() {
+    const available = this.getAvailableBlessings();
+    const active = this.getActiveBlessings();
+    const tier = this.getCurrentTier();
+    const maxBlessings = this.canHaveDualBlessings() ? 2 : 1;
+
+    // Build active blessings display
+    let activeHtml = '';
+    if (active.length > 0) {
+      activeHtml = `
+        <div class="blessings-active">
+          <h3>Active Blessings</h3>
+          ${active.map(b => `
+            <div class="blessing-active-card">
+              <span class="blessing-icon">${b.icon}</span>
+              <div class="blessing-active-info">
+                <span class="blessing-name">${b.name}</span>
+                <span class="blessing-effect">${b.description}</span>
+                <span class="blessing-timer">⏳ ${formatBlessingTime(b.timeRemaining)}</span>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      `;
+    } else {
+      activeHtml = `
+        <div class="blessings-active blessings-none">
+          <p>No active blessings. Choose one below.</p>
+        </div>
+      `;
+    }
+
+    // Build available blessings list
+    const blessingCards = available.map(b => {
+      const isActive = b.isActive;
+      return `
+        <button class="blessing-card ${isActive ? 'blessing-active-card' : ''}"
+                ${isActive ? 'disabled' : `onclick="memoryShrineManager._activateBlessingFromUI('${b.id}')"`}>
+          <span class="blessing-icon">${b.icon}</span>
+          <div class="blessing-card-info">
+            <span class="blessing-name">${b.name}</span>
+            <span class="blessing-desc">${b.description}</span>
+            <span class="blessing-duration">Duration: ${formatBlessingTime(b.duration)}</span>
+          </div>
+          <span class="blessing-status">${isActive ? '✓ Active' : 'Activate'}</span>
+        </button>
+      `;
+    }).join('');
+
+    // Build locked blessings (show what's not yet unlocked)
+    const allBlessings = Object.values(SHRINE_BLESSINGS);
+    const locked = allBlessings.filter(b => !available.some(a => a.id === b.id));
+    let lockedHtml = '';
+    if (locked.length > 0) {
+      lockedHtml = `
+        <div class="blessings-locked">
+          <h3>Locked Blessings</h3>
+          ${locked.map(b => {
+            const tierName = SHRINE_TIERS[b.unlockTier]?.name || `Tier ${b.unlockTier}`;
+            return `
+              <div class="blessing-card blessing-locked">
+                <span class="blessing-icon">🔒</span>
+                <div class="blessing-card-info">
+                  <span class="blessing-name">${b.name}</span>
+                  <span class="blessing-desc">${b.description}</span>
+                  <span class="blessing-unlock">Unlocks at: ${tierName}</span>
+                </div>
+              </div>
+            `;
+          }).join('')}
+        </div>
+      `;
+    }
+
+    const content = `
+      <div class="shrine-blessings">
+        <div class="blessings-header">
+          <h2>✨ Shrine Blessings</h2>
+          <p>Slots: ${active.length}/${maxBlessings} active</p>
+          <button class="close-btn" onclick="hideModal('npc-dialogue-modal')">✕</button>
+        </div>
+
+        ${activeHtml}
+
+        <div class="blessings-available">
+          <h3>Available Blessings</h3>
+          ${blessingCards}
+        </div>
+
+        ${lockedHtml}
+
+        <div class="blessings-footer">
+          <button class="pixel-btn" onclick="NPCSystem.talkTo('shrine_keeper')">Back to Shrine</button>
+        </div>
+      </div>
+    `;
+
+    if (typeof showModal === 'function') {
+      showModal('npc-dialogue-modal', content);
+    }
+  }
+
+  _activateBlessingFromUI(blessingId) {
+    const result = this.activateBlessing(blessingId);
+    if (result.success) {
+      if (typeof showNotification === 'function') {
+        showNotification(result.message, 'success');
+      }
+      // Refresh the UI
+      this.showBlessingsUI();
+    } else {
+      if (typeof showNotification === 'function') {
+        showNotification(result.message, 'error');
+      }
+    }
+  }
 }
 
 // =====================================================

@@ -100,8 +100,8 @@ function getNPCQuestMarkerV2(npcId, questManager) {
   // Priority 1: Quest ready to turn in
   if (npcHasQuestsToTurnInV2(npcId, questManager)) {
     return {
-      icon: '❓',
-      class: 'quest-marker quest-marker-turnin',
+      icon: '?',
+      class: 'npc-marker npc-marker-turnin',
       tooltip: 'Quest Complete - Click to turn in'
     };
   }
@@ -109,20 +109,14 @@ function getNPCQuestMarkerV2(npcId, questManager) {
   // Priority 2: Available quests
   if (npcHasAvailableQuestsV2(npcId, questManager)) {
     return {
-      icon: '❗',
-      class: 'quest-marker quest-marker-available',
+      icon: '!',
+      class: 'npc-marker npc-marker-quest',
       tooltip: 'New Quest Available'
     };
   }
 
-  // Priority 3: Quest in progress
-  if (npcHasQuestsInProgressV2(npcId, questManager)) {
-    return {
-      icon: '⋯',
-      class: 'quest-marker quest-marker-progress',
-      tooltip: 'Quest In Progress'
-    };
-  }
+  // Priority 3: Quest in progress — no marker (per user request, hide when no actionable quests)
+  // In-progress quests don't need a marker since player can't do anything at the NPC
 
   return null;
 }

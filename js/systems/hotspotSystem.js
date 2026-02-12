@@ -266,7 +266,11 @@ const HotspotSystem = {
 
     // Grant gold
     if (hotspot.gold) {
-      GameState.player.gold = (GameState.player.gold || 0) + hotspot.gold;
+      if (typeof addGoldSilent === 'function') {
+        addGoldSilent(hotspot.gold);
+      } else {
+        GameState.player.gold = (GameState.player.gold || 0) + hotspot.gold;
+      }
     }
 
     // Grant reputation

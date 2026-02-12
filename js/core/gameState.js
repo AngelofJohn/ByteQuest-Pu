@@ -45,7 +45,29 @@ const GameState = {
       turnins: {}
     },
     unlockedFeatures: [],
-    vocabulary: {}  // Leitner SR word tracking
+    vocabulary: {},  // Leitner SR word tracking
+
+    // Enhancement System (Tier 3 permanent upgrades)
+    enhancements: {
+      statLevels: {
+        stamina: 0,
+        strength: 0,
+        agility: 0,
+        insight: 0,
+        luck: 0,
+        devotion: 0,
+        knowledge: 0
+      }
+    },
+    enhancementStats: {
+      stamina: 0,
+      strength: 0,
+      agility: 0,
+      insight: 0,
+      luck: 0,
+      devotion: 0,
+      knowledge: 0
+    }
   },
 
   // Settings
@@ -118,7 +140,29 @@ function resetPlayerState() {
       turnins: {}
     },
     unlockedFeatures: [],
-    vocabulary: {}  // Leitner SR word tracking
+    vocabulary: {},  // Leitner SR word tracking
+
+    // Enhancement System (Tier 3 permanent upgrades)
+    enhancements: {
+      statLevels: {
+        stamina: 0,
+        strength: 0,
+        agility: 0,
+        insight: 0,
+        luck: 0,
+        devotion: 0,
+        knowledge: 0
+      }
+    },
+    enhancementStats: {
+      stamina: 0,
+      strength: 0,
+      agility: 0,
+      insight: 0,
+      luck: 0,
+      devotion: 0,
+      knowledge: 0
+    }
   };
 
   // Reset tutorial state for new game

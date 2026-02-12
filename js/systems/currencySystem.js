@@ -130,10 +130,18 @@ class CurrencyManager {
       }
     });
 
-    // Migrate old gold to new system
-    if (this.state.player.gold !== undefined && this.state.player.currencies.gold === 0) {
-      this.state.player.currencies.gold = this.state.player.gold;
-      console.log('[CurrencyManager] Migrated legacy gold:', this.state.player.gold);
+    // Sync gold between legacy player.gold and currencies.gold
+    // Use the higher of the two values to prevent data loss on load
+    const legacyGold = this.state.player.gold || 0;
+    const currenciesGold = this.state.player.currencies.gold || 0;
+    const actualGold = Math.max(legacyGold, currenciesGold);
+
+    if (actualGold > 0) {
+      this.state.player.currencies.gold = actualGold;
+      this.state.player.gold = actualGold;
+      if (legacyGold !== currenciesGold) {
+        console.log('[CurrencyManager] Synced gold - legacy:', legacyGold, 'currencies:', currenciesGold, '-> using:', actualGold);
+      }
     }
 
     // Initialize transaction history
@@ -224,12 +232,19 @@ class CurrencyManager {
       return { success: false, error: 'Invalid currency type' };
     }
 
-    // Apply multipliers from account progression
+    // Apply multipliers from account progression and class bonuses
     let finalAmount = amount;
-    if (currencyType === CurrencyType.GOLD && typeof accountProgression !== 'undefined') {
-      const effects = accountProgression.getActiveEffects();
-      if (effects.goldMultiplier && effects.goldMultiplier > 1) {
-        finalAmount = Math.floor(amount * effects.goldMultiplier);
+    if (currencyType === CurrencyType.GOLD) {
+      // Class bonus (e.g., Rogue +25%)
+      if (this.state.goldMultiplier && this.state.goldMultiplier > 1) {
+        finalAmount = Math.floor(finalAmount * this.state.goldMultiplier);
+      }
+      // Account progression bonus
+      if (typeof accountProgression !== 'undefined') {
+        const effects = accountProgression.getActiveEffects();
+        if (effects.goldMultiplier && effects.goldMultiplier > 1) {
+          finalAmount = Math.floor(finalAmount * effects.goldMultiplier);
+        }
       }
     }
 

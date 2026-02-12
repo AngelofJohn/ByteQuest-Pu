@@ -69,15 +69,8 @@ function showCharacterCreation(preselectedLanguage = null) {
     hideModal('character-creation');
     document.getElementById('title-screen').style.display = 'flex';
 
-    // Check if we should show welcome screen or main menu
-    if (!CourseManager.hasCourses()) {
-      // First-time user - go back to welcome/language selection
-      document.getElementById('main-menu').style.display = 'none';
-      showFirstTimeWelcome();
-    } else {
-      // Returning user - show main menu
-      updateMainMenuButtons();
-    }
+    // Always show main menu, with Continue hidden if no courses exist
+    updateMainMenuButtons();
   });
 
   const nameInput = document.getElementById('player-name-input');
@@ -199,6 +192,12 @@ async function startNewGame(name, classId, language = 'french') {
     console.log('[startNewGame] ShopManager initialized');
   }
 
+  // Initialize HintManager (global for lesson hints)
+  if (typeof HintManager !== 'undefined') {
+    window.hintManager = new HintManager(GameState, window.statsManager, window.itemManager);
+    console.log('[startNewGame] HintManager initialized');
+  }
+
   // Initialize ReputationManager (global for faction systems)
   if (typeof ReputationManager !== 'undefined') {
     window.reputationManager = new ReputationManager(GameState);
@@ -211,6 +210,24 @@ async function startNewGame(name, classId, language = 'french') {
     console.log('[startNewGame] VillageProjectsManager initialized');
   }
 
+  // Initialize EnhancementManager (global for Tier 3 permanent upgrades)
+  if (typeof EnhancementManager !== 'undefined') {
+    window.enhancementManager = new EnhancementManager(GameState);
+    console.log('[startNewGame] EnhancementManager initialized');
+  }
+
+  // Initialize MemoryShrineManager (for shrine blessings, devotion, ancient texts)
+  if (typeof MemoryShrineManager !== 'undefined') {
+    window.memoryShrineManager = new MemoryShrineManager(GameState);
+    console.log('[startNewGame] MemoryShrineManager initialized');
+  }
+
+  // Initialize PracticeManager (for Memory Shrine practice challenges)
+  if (typeof PracticeManager !== 'undefined') {
+    window.practiceManager = new PracticeManager(GameState);
+    console.log('[startNewGame] PracticeManager initialized');
+  }
+
   // Initialize LocationManager (global for location/travel system)
   if (typeof LocationManager !== 'undefined') {
     window.locationManager = new LocationManager(GameState);
@@ -218,6 +235,12 @@ async function startNewGame(name, classId, language = 'french') {
     locationManager.checkQuestBasedDiscovery();
     locationManager.checkLevelUnlocks();
     console.log('[startNewGame] LocationManager initialized');
+  }
+
+  // Initialize TradeNetworkManager (global for Zone 3 trading)
+  if (typeof initTradeNetwork === 'function') {
+    initTradeNetwork(GameState);
+    console.log('[startNewGame] TradeNetworkManager initialized');
   }
 
   // Initialize Spellbook
@@ -249,6 +272,13 @@ function startGame() {
   renderHUD();
   renderLocation();
   updateNavButtonVisibility();
+
+  // Show welcome tutorial for new players
+  if (!GameState.tutorial?.shownTips?.includes('welcomeToDawnmere')) {
+    setTimeout(() => {
+      showTutorialTip('welcomeToDawnmere', '.npc-button', () => {});
+    }, 500);
+  }
 }
 
 // =====================================================
@@ -287,20 +317,21 @@ function renderNPCs(location) {
     const npc = GAME_DATA.npcs[npcId];
     if (!npc) return '';
 
-    // Check for quest markers (safely check if NPCSystem exists)
-    let hasQuest = false;
-    let hasTurnIn = false;
-
-    if (typeof NPCSystem !== 'undefined') {
-      hasQuest = NPCSystem.hasAvailableQuests(npcId);
-      hasTurnIn = NPCSystem.hasQuestsToTurnIn(npcId);
-    }
-
+    // Check for quest markers using V2 system (QuestManager) with NPCSystem fallback
     let marker = '';
-    if (hasTurnIn) {
-      marker = '<span class="npc-marker npc-marker-turnin">?</span>';
-    } else if (hasQuest) {
-      marker = '<span class="npc-marker npc-marker-quest">!</span>';
+    if (typeof getNPCQuestMarkerV2 === 'function' && GameState.questManager) {
+      const markerData = getNPCQuestMarkerV2(npcId, GameState.questManager);
+      if (markerData) {
+        marker = `<span class="${markerData.class}">${markerData.icon}</span>`;
+      }
+    } else if (typeof NPCSystem !== 'undefined') {
+      const hasTurnIn = NPCSystem.hasQuestsToTurnIn(npcId);
+      const hasQuest = NPCSystem.hasAvailableQuests(npcId);
+      if (hasTurnIn) {
+        marker = '<span class="npc-marker npc-marker-turnin">?</span>';
+      } else if (hasQuest) {
+        marker = '<span class="npc-marker npc-marker-quest">!</span>';
+      }
     }
 
     return `

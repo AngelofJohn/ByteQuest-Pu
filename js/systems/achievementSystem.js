@@ -125,15 +125,15 @@ const ACHIEVEMENT_DEFINITIONS = {
     reward: { title: 'Protector' },
     check: (state) => state.player.class === 'protector'
   },
-  pathfinders_path: {
-    id: 'pathfinders_path',
-    name: "Pathfinder's Path",
-    description: 'Begin your journey as a Pathfinder',
-    icon: '🧭',
+  rogues_gambit: {
+    id: 'rogues_gambit',
+    name: "Rogue's Gambit",
+    description: 'Begin your journey as a Rogue',
+    icon: '🗡️',
     category: 'class',
     hidden: false,
-    reward: { title: 'Pathfinder' },
-    check: (state) => state.player.class === 'pathfinder'
+    reward: { title: 'Rogue' },
+    check: (state) => state.player.class === 'rogue'
   },
 
   // Hidden Achievements

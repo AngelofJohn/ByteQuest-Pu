@@ -130,10 +130,13 @@ function renderShopScreen(shopId, tab = 'buy') {
   currentShopTab = tab;
   const playerGold = shopManager.getPlayerGold();
 
-  // Calculate discount from Luck stat
+  // Calculate discount from Luck stat + class bonus
   let discount = 0;
   if (typeof statsManager !== 'undefined' && statsManager) {
     discount = statsManager.calculateShopDiscount();
+  }
+  if (GameState.player.classShopDiscount) {
+    discount += GameState.player.classShopDiscount;
   }
 
   // Build tab buttons

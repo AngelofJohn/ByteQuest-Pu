@@ -55,7 +55,7 @@ function showProfileScreen() {
   `).join('');
   
   // Class icon
-  const classIcons = { sage: '📚', protector: '🛡️', pathfinder: '🧭', cleric: '✝️' };
+  const classIcons = { sage: '📚', protector: '🛡️', rogue: '🗡️', cleric: '✝️' };
   const classIcon = classIcons[player.class] || '👤';
   
   // Build title dropdown options

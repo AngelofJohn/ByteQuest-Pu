@@ -1022,6 +1022,17 @@ const ITEM_DEFINITIONS = {
     description: 'A simple staff for beginners',
     stats: { wisdom: 2 }
   },
+  settlers_clothes: {
+    id: 'settlers_clothes',
+    name: "Settler's Clothes",
+    icon: '👕',
+    type: 'armor',
+    category: ItemCategory.EQUIPMENT,
+    equipmentSlot: EquipmentSlot.ARMOR,
+    rarity: ItemRarity.COMMON,
+    description: 'Simple but sturdy clothes given to new arrivals in Dawnmere',
+    stats: { stamina: 1 }
+  },
   healing_potion: {
     id: 'healing_potion',
     name: 'Healing Potion',

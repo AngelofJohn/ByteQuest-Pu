@@ -418,12 +418,18 @@ class ShopManager {
       }
     }
 
-    // Get price with Luck discount
+    // Get price with Luck discount + class discount
     let unitPrice = this.getItemPrice(shopId, itemId);
     let discount = 0;
     if (typeof statsManager !== 'undefined' && statsManager) {
       discount = statsManager.calculateShopDiscount();
-      unitPrice = Math.floor(unitPrice * (1 - discount));
+    }
+    // Add class shop discount (e.g., Rogue 15%)
+    if (GameState.player.classShopDiscount) {
+      discount += GameState.player.classShopDiscount;
+    }
+    if (discount > 0) {
+      unitPrice = Math.max(1, Math.floor(unitPrice * (1 - discount)));
     }
     const totalPrice = unitPrice * quantity;
 
@@ -498,17 +504,27 @@ class ShopManager {
     const itemDef = this.itemManager ? this.itemManager.getDefinition(itemId) : null;
     if (!itemDef) return 0;
 
+    let price = 0;
+
     // Use sellPrice if defined, otherwise 50% of value
     if (itemDef.sellPrice !== undefined && itemDef.sellPrice > 0) {
-      return itemDef.sellPrice;
+      price = itemDef.sellPrice;
+    } else if (itemDef.value !== undefined) {
+      price = Math.floor(itemDef.value * 0.5);
     }
 
-    // Use value field (from gamedata.js items)
-    if (itemDef.value !== undefined) {
-      return Math.floor(itemDef.value * 0.5);
+    if (price <= 0) return 0;
+
+    // Apply resource value multiplier for gathered materials
+    const isMaterial = itemDef.category === 'crafting_material' || itemDef.type === 'material';
+    if (isMaterial && typeof accountProgression !== 'undefined') {
+      const effects = accountProgression.getActiveEffects();
+      if (effects.resourceValueMultiplier && effects.resourceValueMultiplier > 1) {
+        price = Math.floor(price * effects.resourceValueMultiplier);
+      }
     }
 
-    return 0;
+    return price;
   }
 
   /**

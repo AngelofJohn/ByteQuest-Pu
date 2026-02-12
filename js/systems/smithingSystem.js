@@ -76,208 +76,274 @@ const SMITHING_RECIPES = {
   },
 
   // -------------------------------------------------
-  // Copper Tier Weapons
+  // Gathering Tools - Boost gathering efficiency
   // -------------------------------------------------
-  copper_dagger: {
-    id: 'copper_dagger',
-    name: 'Copper Dagger',
-    category: 'weapons',
-    description: 'A simple but effective blade.',
-    icon: '🗡️',
+  copper_pickaxe: {
+    id: 'copper_pickaxe',
+    name: 'Copper Pickaxe',
+    category: 'tools',
+    description: 'A basic mining tool. +10% mining speed.',
+    icon: '⛏️',
 
     levelRequired: 5,
     unlockMethod: 'known',
 
     ingredients: [
       { type: 'bar', item: 'copper_bar', amount: 2 },
-      { type: 'wood', item: 'pine_log', amount: 1 }
+      { type: 'wood', item: 'pine_log', amount: 2 }
     ],
 
-    output: { item: 'copper_dagger', amount: 1 },
-    xpReward: 20
+    output: { item: 'copper_pickaxe', amount: 1 },
+    xpReward: 20,
+
+    craftsEquipment: true,
+    equipmentSlot: 'tool',
+    equipmentStats: { gatherSpeed: 0.10, gatherType: 'mining' }
   },
 
-  copper_sword: {
-    id: 'copper_sword',
-    name: 'Copper Sword',
-    category: 'weapons',
-    description: 'A balanced copper blade.',
-    icon: '⚔️',
+  copper_axe: {
+    id: 'copper_axe',
+    name: 'Copper Axe',
+    category: 'tools',
+    description: 'A basic woodcutting tool. +10% woodcutting speed.',
+    icon: '🪓',
 
-    levelRequired: 10,
-    unlockMethod: 'skill',
+    levelRequired: 5,
+    unlockMethod: 'known',
 
     ingredients: [
-      { type: 'bar', item: 'copper_bar', amount: 4 },
-      { type: 'wood', item: 'pine_log', amount: 1 },
-      { type: 'hide', item: 'boar_hide', amount: 1 }
+      { type: 'bar', item: 'copper_bar', amount: 2 },
+      { type: 'wood', item: 'pine_log', amount: 2 }
     ],
 
-    output: { item: 'copper_sword', amount: 1 },
-    xpReward: 35
+    output: { item: 'copper_axe', amount: 1 },
+    xpReward: 20,
+
+    craftsEquipment: true,
+    equipmentSlot: 'tool',
+    equipmentStats: { gatherSpeed: 0.10, gatherType: 'woodcutting' }
   },
 
-  // -------------------------------------------------
-  // Iron Tier Weapons
-  // -------------------------------------------------
-  iron_dagger: {
-    id: 'iron_dagger',
-    name: 'Iron Dagger',
-    category: 'weapons',
-    description: 'A sharp iron blade.',
-    icon: '🗡️',
+  iron_pickaxe: {
+    id: 'iron_pickaxe',
+    name: 'Iron Pickaxe',
+    category: 'tools',
+    description: 'A sturdy mining tool. +20% mining speed.',
+    icon: '⛏️',
 
     levelRequired: 25,
     unlockMethod: 'skill',
 
     ingredients: [
-      { type: 'bar', item: 'iron_bar', amount: 2 },
-      { type: 'wood', item: 'oak_timber', amount: 1 }
+      { type: 'bar', item: 'iron_bar', amount: 3 },
+      { type: 'wood', item: 'oak_timber', amount: 2 }
     ],
 
-    output: { item: 'iron_dagger', amount: 1 },
-    xpReward: 45
+    output: { item: 'iron_pickaxe', amount: 1 },
+    xpReward: 45,
+
+    craftsEquipment: true,
+    equipmentSlot: 'tool',
+    equipmentStats: { gatherSpeed: 0.20, gatherType: 'mining' }
   },
 
-  iron_sword: {
-    id: 'iron_sword',
-    name: 'Iron Sword',
-    category: 'weapons',
-    description: 'A reliable iron sword.',
-    icon: '⚔️',
+  iron_axe: {
+    id: 'iron_axe',
+    name: 'Iron Axe',
+    category: 'tools',
+    description: 'A sturdy woodcutting tool. +20% woodcutting speed.',
+    icon: '🪓',
 
-    levelRequired: 35,
+    levelRequired: 25,
     unlockMethod: 'skill',
 
     ingredients: [
-      { type: 'bar', item: 'iron_bar', amount: 4 },
-      { type: 'wood', item: 'oak_timber', amount: 1 },
-      { type: 'hide', item: 'wolf_pelt', amount: 1 }
+      { type: 'bar', item: 'iron_bar', amount: 3 },
+      { type: 'wood', item: 'oak_timber', amount: 2 }
     ],
 
-    output: { item: 'iron_sword', amount: 1 },
-    xpReward: 60
+    output: { item: 'iron_axe', amount: 1 },
+    xpReward: 45,
+
+    craftsEquipment: true,
+    equipmentSlot: 'tool',
+    equipmentStats: { gatherSpeed: 0.20, gatherType: 'woodcutting' }
   },
 
-  // -------------------------------------------------
-  // Copper Tier Armor
-  // -------------------------------------------------
-  copper_helm: {
-    id: 'copper_helm',
-    name: 'Copper Helm',
-    category: 'armor',
-    description: 'Basic head protection.',
-    icon: '🪖',
-
-    levelRequired: 8,
-    unlockMethod: 'known',
-
-    ingredients: [
-      { type: 'bar', item: 'copper_bar', amount: 3 }
-    ],
-
-    output: { item: 'copper_helm', amount: 1 },
-    xpReward: 25
-  },
-
-  copper_chestplate: {
-    id: 'copper_chestplate',
-    name: 'Copper Chestplate',
-    category: 'armor',
-    description: 'Torso protection for the novice smith.',
-    icon: '🛡️',
-
-    levelRequired: 15,
-    unlockMethod: 'skill',
-
-    ingredients: [
-      { type: 'bar', item: 'copper_bar', amount: 5 },
-      { type: 'hide', item: 'boar_hide', amount: 2 }
-    ],
-
-    output: { item: 'copper_chestplate', amount: 1 },
-    xpReward: 45
-  },
-
-  // -------------------------------------------------
-  // Iron Tier Armor
-  // -------------------------------------------------
-  iron_helm: {
-    id: 'iron_helm',
-    name: 'Iron Helm',
-    category: 'armor',
-    description: 'Sturdy iron head protection.',
-    icon: '🪖',
-
-    levelRequired: 30,
-    unlockMethod: 'skill',
-
-    ingredients: [
-      { type: 'bar', item: 'iron_bar', amount: 3 }
-    ],
-
-    output: { item: 'iron_helm', amount: 1 },
-    xpReward: 50
-  },
-
-  iron_chestplate: {
-    id: 'iron_chestplate',
-    name: 'Iron Chestplate',
-    category: 'armor',
-    description: 'Heavy iron armor for serious protection.',
-    icon: '🛡️',
+  silver_fishing_rod: {
+    id: 'silver_fishing_rod',
+    name: 'Silver Fishing Rod',
+    category: 'tools',
+    description: 'An elegant fishing tool. +15% fishing speed, +5% rare catch chance.',
+    icon: '🎣',
 
     levelRequired: 45,
     unlockMethod: 'skill',
 
     ingredients: [
-      { type: 'bar', item: 'iron_bar', amount: 5 },
-      { type: 'hide', item: 'wolf_pelt', amount: 2 }
+      { type: 'bar', item: 'silver_bar', amount: 2 },
+      { type: 'wood', item: 'ironwood', amount: 1 }
     ],
 
-    output: { item: 'iron_chestplate', amount: 1 },
-    xpReward: 70
+    output: { item: 'silver_fishing_rod', amount: 1 },
+    xpReward: 60,
+
+    craftsEquipment: true,
+    equipmentSlot: 'tool',
+    equipmentStats: { gatherSpeed: 0.15, rarityBonus: 0.05, gatherType: 'fishing' }
   },
 
   // -------------------------------------------------
-  // Warrior's Plate Set Items
+  // Trade Goods - Higher value crafted items
   // -------------------------------------------------
-  iron_armor: {
-    id: 'iron_armor',
-    name: 'Iron Armor',
-    category: 'armor',
-    description: 'Heavy iron plate armor. Part of the Warrior\'s Plate set.',
-    icon: '🛡️',
+  copper_ingot_stack: {
+    id: 'copper_ingot_stack',
+    name: 'Copper Ingot Stack',
+    category: 'trade_goods',
+    description: 'Bundled copper bars. Valuable for trade.',
+    icon: '📦',
 
-    levelRequired: 35,
+    levelRequired: 10,
     unlockMethod: 'skill',
 
     ingredients: [
-      { type: 'bar', item: 'iron_bar', amount: 4 },
-      { type: 'hide', item: 'wolf_pelt', amount: 1 }
+      { type: 'bar', item: 'copper_bar', amount: 5 }
     ],
 
-    output: { item: 'iron_armor', amount: 1 },
-    xpReward: 60
+    output: { item: 'copper_ingot_stack', amount: 1 },
+    xpReward: 30,
+    sellPrice: 50
   },
 
-  warriors_shield: {
-    id: 'warriors_shield',
-    name: "Warrior's Shield",
-    category: 'armor',
-    description: 'A sturdy iron shield. Part of the Warrior\'s Plate set.',
-    icon: '🛡️',
+  iron_ingot_stack: {
+    id: 'iron_ingot_stack',
+    name: 'Iron Ingot Stack',
+    category: 'trade_goods',
+    description: 'Bundled iron bars. Highly sought after by merchants.',
+    icon: '📦',
 
-    levelRequired: 25,
+    levelRequired: 30,
+    unlockMethod: 'skill',
+
+    ingredients: [
+      { type: 'bar', item: 'iron_bar', amount: 5 }
+    ],
+
+    output: { item: 'iron_ingot_stack', amount: 1 },
+    xpReward: 50,
+    sellPrice: 120
+  },
+
+  silver_ingot_stack: {
+    id: 'silver_ingot_stack',
+    name: 'Silver Ingot Stack',
+    category: 'trade_goods',
+    description: 'Bundled silver bars. A luxury trade commodity.',
+    icon: '📦',
+
+    levelRequired: 50,
+    unlockMethod: 'skill',
+
+    ingredients: [
+      { type: 'bar', item: 'silver_bar', amount: 5 }
+    ],
+
+    output: { item: 'silver_ingot_stack', amount: 1 },
+    xpReward: 80,
+    sellPrice: 300
+  },
+
+  // -------------------------------------------------
+  // Accessories - Stat-boosting jewelry
+  // -------------------------------------------------
+  copper_ring: {
+    id: 'copper_ring',
+    name: 'Copper Ring',
+    category: 'accessories',
+    description: 'A simple copper band. +1 Luck.',
+    icon: '💍',
+
+    levelRequired: 8,
+    unlockMethod: 'known',
+
+    ingredients: [
+      { type: 'bar', item: 'copper_bar', amount: 2 }
+    ],
+
+    output: { item: 'copper_ring', amount: 1 },
+    xpReward: 15,
+
+    craftsEquipment: true,
+    equipmentSlot: 'accessory',
+    equipmentStats: { luck: 1 }
+  },
+
+  iron_amulet: {
+    id: 'iron_amulet',
+    name: 'Iron Amulet',
+    category: 'accessories',
+    description: 'A sturdy iron pendant. +1 Strength, +1 Stamina.',
+    icon: '📿',
+
+    levelRequired: 28,
     unlockMethod: 'skill',
 
     ingredients: [
       { type: 'bar', item: 'iron_bar', amount: 2 },
-      { type: 'wood', item: 'oak_timber', amount: 1 }
+      { type: 'hide', item: 'wolf_pelt', amount: 1 }
     ],
 
-    output: { item: 'warriors_shield', amount: 1 },
-    xpReward: 40
+    output: { item: 'iron_amulet', amount: 1 },
+    xpReward: 40,
+
+    craftsEquipment: true,
+    equipmentSlot: 'accessory',
+    equipmentStats: { strength: 1, stamina: 1 }
+  },
+
+  silver_ring: {
+    id: 'silver_ring',
+    name: 'Silver Ring',
+    category: 'accessories',
+    description: 'An elegant silver band. +2 Luck, +1 Insight.',
+    icon: '💍',
+
+    levelRequired: 42,
+    unlockMethod: 'skill',
+
+    ingredients: [
+      { type: 'bar', item: 'silver_bar', amount: 2 }
+    ],
+
+    output: { item: 'silver_ring', amount: 1 },
+    xpReward: 55,
+
+    craftsEquipment: true,
+    equipmentSlot: 'accessory',
+    equipmentStats: { luck: 2, insight: 1 }
+  },
+
+  silver_amulet: {
+    id: 'silver_amulet',
+    name: 'Silver Amulet',
+    category: 'accessories',
+    description: 'A gleaming silver pendant. +2 Knowledge, +1 Devotion.',
+    icon: '📿',
+
+    levelRequired: 48,
+    unlockMethod: 'skill',
+
+    ingredients: [
+      { type: 'bar', item: 'silver_bar', amount: 3 },
+      { type: 'herb', item: 'moonblossom', amount: 1 }
+    ],
+
+    output: { item: 'silver_amulet', amount: 1 },
+    xpReward: 70,
+
+    craftsEquipment: true,
+    equipmentSlot: 'accessory',
+    equipmentStats: { knowledge: 2, devotion: 1 }
   }
 };
 
@@ -621,9 +687,9 @@ class SmithingManager {
   getCategoryIcon(category) {
     const icons = {
       smelting: '🔥',
-      weapons: '⚔️',
-      armor: '🛡️',
-      tools: '🔧'
+      tools: '🔧',
+      trade_goods: '📦',
+      accessories: '💍'
     };
     return icons[category] || '🔨';
   }
@@ -631,9 +697,9 @@ class SmithingManager {
   getCategoryName(category) {
     const names = {
       smelting: 'Smelting',
-      weapons: 'Weapons',
-      armor: 'Armor',
-      tools: 'Tools'
+      tools: 'Gathering Tools',
+      trade_goods: 'Trade Goods',
+      accessories: 'Accessories'
     };
     return names[category] || category;
   }

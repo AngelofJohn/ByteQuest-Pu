@@ -548,6 +548,13 @@ function showLessonCompletionScreen(data) {
       </div>
     </div>
   `);
+
+  // Show quest complete tutorial for first-time players (only on successful completion)
+  if (passed && !GameState.tutorial?.shownTips?.includes('questComplete')) {
+    setTimeout(() => {
+      showTutorialTip('questComplete', '.lesson-complete-screen', () => {});
+    }, 300);
+  }
 }
 
 // Close lesson complete modal and show any pending quest completions/level ups
@@ -926,6 +933,12 @@ function loadGame() {
       console.log('[loadGame] ShopManager initialized');
     }
 
+    // Initialize HintManager for loaded game
+    if (typeof HintManager !== 'undefined') {
+      window.hintManager = new HintManager(GameState, window.statsManager, window.itemManager);
+      console.log('[loadGame] HintManager initialized');
+    }
+
     // Initialize ReputationManager for loaded game
     if (typeof ReputationManager !== 'undefined') {
       window.reputationManager = new ReputationManager(GameState);
@@ -938,6 +951,12 @@ function loadGame() {
       console.log('[loadGame] VillageProjectsManager initialized');
     }
 
+    // Initialize EnhancementManager for loaded game
+    if (typeof EnhancementManager !== 'undefined') {
+      window.enhancementManager = new EnhancementManager(GameState);
+      console.log('[loadGame] EnhancementManager initialized');
+    }
+
     // Initialize LocationManager for loaded game
     if (typeof LocationManager !== 'undefined') {
       window.locationManager = new LocationManager(GameState);
@@ -945,6 +964,12 @@ function loadGame() {
       locationManager.checkQuestBasedDiscovery();
       locationManager.checkLevelUnlocks();
       console.log('[loadGame] LocationManager initialized');
+    }
+
+    // Initialize TradeNetworkManager for loaded game
+    if (typeof initTradeNetwork === 'function') {
+      initTradeNetwork(GameState);
+      console.log('[loadGame] TradeNetworkManager initialized');
     }
 
     // Initialize Spellbook for loaded game

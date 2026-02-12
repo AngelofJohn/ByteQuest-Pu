@@ -124,12 +124,14 @@ const QuestionSystem = {
 
     // Language-specific article mappings
     // Note: French l' is handled via word.article since it applies to both m/f before vowels
+    // Dutch uses 'de' (common gender) and 'het' (neuter)
     const articleMappings = {
       french: { m: 'le', f: 'la', pl: 'les', elision: "l'" },
       greek: { m: 'ο', f: 'η', n: 'το' },
       german: { m: 'der', f: 'die', n: 'das' },
       spanish: { m: 'el', f: 'la' },
-      italian: { m: 'il', f: 'la' }
+      italian: { m: 'il', f: 'la' },
+      dutch: { de: 'de', het: 'het' }
     };
 
     const articles = articleMappings[language] || articleMappings.french;
@@ -140,7 +142,12 @@ const QuestionSystem = {
     const targetField = this._getTargetLanguageField();
 
     // For gender questions, show the base word without article
-    const displayWord = word.frenchBase || word.greekBase || word[targetField];
+    // Dutch words include "de" or "het" in the dutch field, need to strip it
+    let displayWord = word.frenchBase || word.greekBase || word.dutchBase || word[targetField];
+    if (language === 'dutch' && displayWord) {
+      // Strip "de " or "het " prefix if present
+      displayWord = displayWord.replace(/^(de|het)\s+/i, '');
+    }
 
     return {
       type: 'gender_match',
@@ -403,7 +410,8 @@ const QuestionSystem = {
       greek: 'Greek',
       spanish: 'Spanish',
       german: 'German',
-      italian: 'Italian'
+      italian: 'Italian',
+      dutch: 'Dutch'
     };
     return names[language] || language.charAt(0).toUpperCase() + language.slice(1);
   },
@@ -444,10 +452,18 @@ const QuestionSystem = {
   _gatherWordsWithGender(vocab, category = null) {
     let words = [];
 
+    // Filter function: word has gender info (either gender+article or just gender for Dutch)
+    const hasGenderInfo = (w) => {
+      // Dutch uses gender field directly as the article (de/het)
+      if (w.gender === 'de' || w.gender === 'het') return true;
+      // Other languages use gender + article
+      return w.gender && w.article;
+    };
+
     if (category && vocab[category]) {
       Object.values(vocab[category]).forEach(sub => {
         if (Array.isArray(sub)) {
-          words = words.concat(sub.filter(w => w.gender && w.article));
+          words = words.concat(sub.filter(hasGenderInfo));
         }
       });
     } else {
@@ -456,7 +472,7 @@ const QuestionSystem = {
         if (typeof cat === 'object') {
           Object.values(cat).forEach(sub => {
             if (Array.isArray(sub)) {
-              words = words.concat(sub.filter(w => w.gender && w.article));
+              words = words.concat(sub.filter(hasGenderInfo));
             }
           });
         }

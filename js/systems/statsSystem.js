@@ -19,18 +19,18 @@ const StatType = {
 };
 
 const STAT_DEFINITIONS = {
-  // Major Stats
+  // Major Stats - These have significant, noticeable effects
   [StatType.STAMINA]: {
     id: StatType.STAMINA,
     name: 'Stamina',
     type: 'major',
     icon: '❤️',
-    description: '+5 Max HP per point. Lets you endure more mistakes.',
+    description: '+8 Max HP per point. More HP means more room for mistakes.',
     color: '#e63946',
     active: true,
     effect: {
       type: 'maxHp',
-      perPoint: 5
+      perPoint: 8
     }
   },
   [StatType.STRENGTH]: {
@@ -38,13 +38,12 @@ const STAT_DEFINITIONS = {
     name: 'Strength',
     type: 'major',
     icon: '⚔️',
-    description: 'Reduces HP lost on wrong answers. Base 10, -0.5 per point (min 5).',
+    description: 'Reduces damage by 1 per point. Min 5 damage.',
     color: '#e76f51',
     active: true,
     effect: {
       type: 'damageReduction',
-      perPoint: 0.5,
-      baseDamage: 10,
+      perPoint: 1,
       minDamage: 5
     }
   },
@@ -53,13 +52,13 @@ const STAT_DEFINITIONS = {
     name: 'Agility',
     type: 'major',
     icon: '💨',
-    description: 'Protects streaks. At 5+, one wrong answer per lesson won\'t break your streak.',
+    description: '+5% bonus time on timed questions per point. Faster gathering.',
     color: '#4cc9f0',
     active: true,
     effect: {
-      type: 'streakProtection',
-      threshold: 5,
-      protections: 1
+      type: 'speedBonus',
+      timerBonusPerPoint: 0.05,
+      gatherSpeedPerPoint: 0.03
     }
   },
   [StatType.INSIGHT]: {
@@ -67,27 +66,28 @@ const STAT_DEFINITIONS = {
     name: 'Insight',
     type: 'major',
     icon: '👁️',
-    description: '+1 hint charge per 3 points. Improves hint quality.',
+    description: '+1 hint per 5 points. At 10+, hints show more detail.',
     color: '#f4a261',
     active: true,
     effect: {
       type: 'hintCharges',
-      pointsPerCharge: 3
+      pointsPerCharge: 5,
+      improvedHintsThreshold: 10
     }
   },
-  // Minor Stats
+  // Minor Stats - Smaller but useful passive bonuses
   [StatType.LUCK]: {
     id: StatType.LUCK,
     name: 'Luck',
     type: 'minor',
     icon: '🍀',
-    description: '2% chance per point to avoid HP loss. Better shop prices.',
+    description: '5% chance per point to avoid damage. Also gives 2% shop discount per point.',
     color: '#2a9d8f',
     active: true,
     effect: {
       type: 'avoidDamage',
-      chancePerPoint: 0.02,
-      shopDiscount: 0.01
+      chancePerPoint: 0.05,
+      shopDiscount: 0.02
     }
   },
   [StatType.DEVOTION]: {
@@ -95,12 +95,12 @@ const STAT_DEFINITIONS = {
     name: 'Devotion',
     type: 'minor',
     icon: '✨',
-    description: '+5% reputation gain per point with all factions.',
+    description: '+10% reputation gain per point with all factions.',
     color: '#ffd700',
     active: true,
     effect: {
       type: 'reputationBonus',
-      perPoint: 0.05
+      perPoint: 0.10
     }
   },
   [StatType.KNOWLEDGE]: {
@@ -108,25 +108,26 @@ const STAT_DEFINITIONS = {
     name: 'Knowledge',
     type: 'minor',
     icon: '📖',
-    description: 'Words stay mastered longer. Reduces review frequency.',
+    description: '+5% XP from lessons per point. Words decay slower.',
     color: '#90be6d',
     active: true,
     effect: {
       type: 'masteryRetention',
-      decayReduction: 0.1
+      decayReduction: 0.1,
+      xpBonus: 0.05
     }
   }
 };
 
-// Starting stat values (placeholder - to be balanced later)
+// Starting stat values - low to allow meaningful progression
 const STARTING_STATS = {
-  [StatType.STAMINA]: 5,
-  [StatType.STRENGTH]: 5,
-  [StatType.AGILITY]: 5,
-  [StatType.INSIGHT]: 5,
-  [StatType.LUCK]: 3,
-  [StatType.DEVOTION]: 3,
-  [StatType.KNOWLEDGE]: 3
+  [StatType.STAMINA]: 3,    // 30 HP from stat + 30 base = 60 HP
+  [StatType.STRENGTH]: 2,   // -2 damage reduction (8 damage on normal)
+  [StatType.AGILITY]: 2,    // No streak protection yet (need 8)
+  [StatType.INSIGHT]: 3,    // 0 hints (need 5 for first hint)
+  [StatType.LUCK]: 1,       // 5% avoid chance, 2% shop discount
+  [StatType.DEVOTION]: 1,   // +10% rep gain
+  [StatType.KNOWLEDGE]: 1   // +5% XP, minor decay reduction
 };
 
 // Stat gains per level (automatic assignment)
@@ -187,8 +188,13 @@ class StatsManager {
     return this.state.player.bonusStats[statId] || 0;
   }
 
+  getEnhancementStat(statId) {
+    // Get bonus from Enhancement System (Tier 3 permanent upgrades)
+    return this.state.player.enhancementStats?.[statId] || 0;
+  }
+
   getTotalStat(statId) {
-    return this.getBaseStat(statId) + this.getBonusStat(statId);
+    return this.getBaseStat(statId) + this.getBonusStat(statId) + this.getEnhancementStat(statId);
   }
 
   getAllStats() {
@@ -197,6 +203,7 @@ class StatsManager {
       stats[statId] = {
         base: this.getBaseStat(statId),
         bonus: this.getBonusStat(statId),
+        enhancement: this.getEnhancementStat(statId),
         total: this.getTotalStat(statId),
         definition: STAT_DEFINITIONS[statId]
       };
@@ -327,87 +334,148 @@ class StatsManager {
   }
 
   // ===================================================
-  // Stat Effects (Phase 1 Active Stats)
+  // Stat Effects - Rebalanced for meaningful progression
   // ===================================================
 
   /**
    * Calculate max HP based on Stamina
-   * Base 50 + (Stamina * 3) + level bonus
+   * Base 15 + (Stamina * 8) + level bonus
+   * At start (3 Sta): 15 + 24 = 39 HP (~4 mistakes at 10 dmg)
+   * At level 10 with 7 Sta: 15 + 56 + 18 = 89 HP
    */
   calculateMaxHp() {
     const stamina = this.getTotalStat(StatType.STAMINA);
-    const baseHp = 50; // Reduced from 100 to make HP feel meaningful
-    const staminaBonus = stamina * 3; // Reduced from 5 to 3 per stamina
+    const baseHp = 15;
+    const staminaBonus = stamina * 8;
     const levelBonus = (this.state.player.level - 1) * 2;
     return baseHp + staminaBonus + levelBonus;
   }
 
   /**
    * Calculate damage taken on wrong answer based on Strength
-   * Base 10, -0.5 per Strength point, minimum 5
+   * -1 damage per Strength point, minimum 5 damage
+   * At start (2 Str): 10 - 2 = 8 damage (but normal difficulty is 10)
+   * At 5 Str: 10 - 5 = 5 damage (minimum)
    */
   calculateDamageTaken(baseDamage = 10) {
     const strength = this.getTotalStat(StatType.STRENGTH);
-    const reduction = strength * 0.5;
-    return Math.max(Math.floor(baseDamage * 0.5), Math.round(baseDamage - reduction));
+    const minDamage = STAT_DEFINITIONS[StatType.STRENGTH].effect.minDamage;
+    return Math.max(minDamage, baseDamage - strength);
   }
 
   /**
    * Check if Luck prevents damage
-   * 2% chance per Luck point
+   * 5% chance per Luck point
+   * At start (1 Luck): 5% chance
+   * At 5 Luck: 25% chance
    */
   rollLuckAvoidDamage() {
     const luck = this.getTotalStat(StatType.LUCK);
-    const chance = luck * 0.02;
-    return Math.random() < chance;
+    const chance = luck * STAT_DEFINITIONS[StatType.LUCK].effect.chancePerPoint;
+    const roll = Math.random();
+    return roll < chance;
   }
 
   /**
    * Calculate shop discount based on Luck
-   * 1% per Luck point
+   * 2% per Luck point
+   * At 5 Luck: 10% discount
    */
   calculateShopDiscount() {
     const luck = this.getTotalStat(StatType.LUCK);
-    return luck * 0.01;
+    return luck * STAT_DEFINITIONS[StatType.LUCK].effect.shopDiscount;
   }
 
   /**
-   * Check if player has streak protection from Agility
-   * Requires 5+ Agility
+   * Calculate timer bonus from Agility
+   * 5% per point
+   * At 5 Agility: +25% time on timed questions
    */
-  hasStreakProtection() {
+  calculateTimerBonus() {
     const agility = this.getTotalStat(StatType.AGILITY);
-    return agility >= 5;
+    return agility * (STAT_DEFINITIONS[StatType.AGILITY].effect.timerBonusPerPoint || 0.05);
+  }
+
+  /**
+   * Calculate gathering speed bonus from Agility
+   * 3% per point
+   * At 5 Agility: +15% faster gathering
+   */
+  calculateGatherSpeedBonus() {
+    const agility = this.getTotalStat(StatType.AGILITY);
+    return agility * (STAT_DEFINITIONS[StatType.AGILITY].effect.gatherSpeedPerPoint || 0.03);
   }
 
   /**
    * Calculate reputation bonus from Devotion
-   * 5% per point
+   * 10% per point
+   * At 5 Devotion: +50% rep gain
    */
   calculateReputationMultiplier() {
     const devotion = this.getTotalStat(StatType.DEVOTION);
-    return 1.0 + (devotion * 0.05);
+    return 1.0 + (devotion * STAT_DEFINITIONS[StatType.DEVOTION].effect.perPoint);
   }
 
   /**
    * Calculate mastery decay reduction from Knowledge
-   * 10% reduction per point
+   * 10% reduction per point (max 50% at 5 Knowledge)
    */
   calculateMasteryDecayReduction() {
     const knowledge = this.getTotalStat(StatType.KNOWLEDGE);
-    return knowledge * 0.1;
+    return Math.min(0.5, knowledge * STAT_DEFINITIONS[StatType.KNOWLEDGE].effect.decayReduction);
   }
 
   /**
-   * Calculate hint quality based on Insight
-   * Higher insight = better hints
-   * Returns a tier: 0 = basic, 1 = good, 2 = great
+   * Calculate XP bonus from Knowledge
+   * 5% per point
+   * At 5 Knowledge: +25% XP
+   */
+  calculateXpBonus() {
+    const knowledge = this.getTotalStat(StatType.KNOWLEDGE);
+    return knowledge * (STAT_DEFINITIONS[StatType.KNOWLEDGE].effect.xpBonus || 0.05);
+  }
+
+  /**
+   * Calculate number of hint charges from Insight
+   * 1 charge per 5 points
+   * At 5 Insight: 1 hint
+   * At 10 Insight: 2 hints + improved quality
+   */
+  calculateHintCharges() {
+    const insight = this.getTotalStat(StatType.INSIGHT);
+    const pointsPerCharge = STAT_DEFINITIONS[StatType.INSIGHT].effect.pointsPerCharge;
+    return Math.floor(insight / pointsPerCharge);
+  }
+
+  /**
+   * Calculate hint quality tier based on Insight
+   * 0 = basic, 1 = good (10+), 2 = great (15+)
    */
   calculateHintTier() {
     const insight = this.getTotalStat(StatType.INSIGHT);
     if (insight >= 15) return 2;
-    if (insight >= 8) return 1;
+    if (insight >= 10) return 1;
     return 0;
+  }
+
+  /**
+   * Get a summary of all stat effects for UI display
+   */
+  getStatEffectsSummary() {
+    return {
+      maxHp: this.calculateMaxHp(),
+      damageReduction: this.getTotalStat(StatType.STRENGTH),
+      minDamage: STAT_DEFINITIONS[StatType.STRENGTH].effect.minDamage,
+      luckChance: Math.round(this.getTotalStat(StatType.LUCK) * STAT_DEFINITIONS[StatType.LUCK].effect.chancePerPoint * 100),
+      shopDiscount: Math.round(this.calculateShopDiscount() * 100),
+      timerBonus: Math.round(this.calculateTimerBonus() * 100),
+      gatherSpeedBonus: Math.round(this.calculateGatherSpeedBonus() * 100),
+      hintCharges: this.calculateHintCharges(),
+      hintTier: this.calculateHintTier(),
+      xpBonus: Math.round(this.calculateXpBonus() * 100),
+      repBonus: Math.round((this.calculateReputationMultiplier() - 1) * 100),
+      decayReduction: Math.round(this.calculateMasteryDecayReduction() * 100)
+    };
   }
 }
 

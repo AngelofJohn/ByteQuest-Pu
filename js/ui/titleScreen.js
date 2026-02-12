@@ -68,7 +68,8 @@ const CourseManager = {
       spanish: '🇪🇸',
       german: '🇩🇪',
       italian: '🇮🇹',
-      greek: '🇬🇷'
+      greek: '🇬🇷',
+      dutch: '🇳🇱'
     };
     return flags[language] || '🌐';
   },
@@ -82,7 +83,8 @@ const CourseManager = {
       spanish: 'Spanish',
       german: 'German',
       italian: 'Italian',
-      greek: 'Greek'
+      greek: 'Greek',
+      dutch: 'Dutch'
     };
     return names[language] || language;
   },
@@ -140,6 +142,12 @@ let coursePanelMode = 'new'; // 'new' or 'continue'
  */
 function showCoursePanel(mode) {
   coursePanelMode = mode;
+
+  // If no courses exist and user clicks New Game, go straight to language selection
+  if (mode === 'new' && !CourseManager.hasCourses()) {
+    showLanguageSelection();
+    return;
+  }
 
   document.getElementById('main-menu').style.display = 'none';
   document.getElementById('course-panel').style.display = 'block';
@@ -261,10 +269,19 @@ function deleteCourse(courseId) {
 
     // Check if all courses are now deleted
     if (!CourseManager.hasCourses()) {
-      // Hide course panel, show welcome screen for first-time flow
+      // Hide course panel, return to main menu with only New Game visible
       document.getElementById('course-panel').style.display = 'none';
-      document.getElementById('main-menu').style.display = 'none';
-      showFirstTimeWelcome();
+
+      // Hide welcome screen if it exists
+      const welcomeDiv = document.getElementById('welcome-screen');
+      if (welcomeDiv) welcomeDiv.style.display = 'none';
+
+      // Show main menu with updated button visibility
+      const mainMenu = document.getElementById('main-menu');
+      const continueBtn = document.getElementById('continue-btn');
+
+      if (mainMenu) mainMenu.style.display = 'flex';
+      if (continueBtn) continueBtn.style.display = 'none';
     } else {
       renderCoursePanel();
     }
@@ -329,6 +346,18 @@ async function loadCourseAndStart(courseId) {
     await CourseLoader.loadCourse(language);
   }
 
+  // Update the language manager to match the loaded course
+  if (typeof languageManager !== 'undefined') {
+    languageManager.current = language;
+    console.log('[loadCourseAndStart] Set languageManager.current to:', language);
+  }
+
+  // Initialize CourseDataManager for this language
+  if (typeof CourseDataManager !== 'undefined' && CourseDataManager.initialize) {
+    CourseDataManager.initialize(language);
+    console.log('[loadCourseAndStart] CourseDataManager initialized for:', language);
+  }
+
   // Initialize managers for loaded game
   if (typeof MilestoneManager !== 'undefined') {
     window.milestoneManager = new MilestoneManager(GameState);
@@ -351,12 +380,21 @@ async function loadCourseAndStart(courseId) {
     console.log('[loadCourseAndStart] TitleManager initialized');
   }
   if (typeof ItemManager !== 'undefined' && typeof GAME_DATA !== 'undefined') {
-    window.itemManager = new ItemManager(GameState, GAME_DATA.items);
-    console.log('[loadCourseAndStart] ItemManager initialized');
+    // Merge resource items with game data items
+    const allItems = {
+      ...GAME_DATA.items,
+      ...(typeof RESOURCE_ITEMS !== 'undefined' ? RESOURCE_ITEMS : {})
+    };
+    window.itemManager = new ItemManager(GameState, allItems);
+    console.log('[loadCourseAndStart] ItemManager initialized with', Object.keys(allItems).length, 'items');
   }
   if (typeof ShopManager !== 'undefined' && typeof SHOP_DEFINITIONS !== 'undefined') {
     window.shopManager = new ShopManager(GameState, SHOP_DEFINITIONS, window.itemManager);
     console.log('[loadCourseAndStart] ShopManager initialized');
+  }
+  if (typeof HintManager !== 'undefined') {
+    window.hintManager = new HintManager(GameState, window.statsManager, window.itemManager);
+    console.log('[loadCourseAndStart] HintManager initialized');
   }
   if (typeof ReputationManager !== 'undefined') {
     window.reputationManager = new ReputationManager(GameState);
@@ -365,6 +403,10 @@ async function loadCourseAndStart(courseId) {
   if (typeof VillageProjectsManager !== 'undefined') {
     window.villageProjectsManager = new VillageProjectsManager(GameState);
     console.log('[loadCourseAndStart] VillageProjectsManager initialized');
+  }
+  if (typeof MemoryShrineManager !== 'undefined') {
+    window.memoryShrineManager = new MemoryShrineManager(GameState);
+    console.log('[loadCourseAndStart] MemoryShrineManager initialized');
   }
   if (typeof LocationManager !== 'undefined') {
     window.locationManager = new LocationManager(GameState);

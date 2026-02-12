@@ -8,8 +8,70 @@ const GREEK_VOCAB = {
     language: "greek",
     languageCode: "el",
     nativeName: "Ελληνικά",
-    version: "1.0.0"
+    version: "1.1.0"
   },
+
+  // =====================================================
+  // ALPHABET - Greek Letters (for lesson quizzes)
+  // =====================================================
+  alphabet: [
+    { greek: "Α α", english: "Alpha", romanized: "A a", hint: "Like 'a' in 'father'" },
+    { greek: "Β β", english: "Beta", romanized: "V v", hint: "Like 'v' in 'vote'" },
+    { greek: "Γ γ", english: "Gamma", romanized: "G g/Y y", hint: "Like 'y' before e/i, 'g' elsewhere" },
+    { greek: "Δ δ", english: "Delta", romanized: "D d/Th th", hint: "Like 'th' in 'this'" },
+    { greek: "Ε ε", english: "Epsilon", romanized: "E e", hint: "Like 'e' in 'bed'" },
+    { greek: "Ζ ζ", english: "Zeta", romanized: "Z z", hint: "Like 'z' in 'zoo'" },
+    { greek: "Η η", english: "Eta", romanized: "I i", hint: "Like 'ee' in 'see'" },
+    { greek: "Θ θ", english: "Theta", romanized: "Th th", hint: "Like 'th' in 'think'" },
+    { greek: "Ι ι", english: "Iota", romanized: "I i", hint: "Like 'ee' in 'see'" },
+    { greek: "Κ κ", english: "Kappa", romanized: "K k", hint: "Like 'k' in 'kite'" },
+    { greek: "Λ λ", english: "Lambda", romanized: "L l", hint: "Like 'l' in 'love'" },
+    { greek: "Μ μ", english: "Mu", romanized: "M m", hint: "Like 'm' in 'mother'" },
+    { greek: "Ν ν", english: "Nu", romanized: "N n", hint: "Like 'n' in 'no'" },
+    { greek: "Ξ ξ", english: "Xi", romanized: "X x/Ks ks", hint: "Like 'x' in 'box'" },
+    { greek: "Ο ο", english: "Omicron", romanized: "O o", hint: "Like 'o' in 'pot'" },
+    { greek: "Π π", english: "Pi", romanized: "P p", hint: "Like 'p' in 'pot'" },
+    { greek: "Ρ ρ", english: "Rho", romanized: "R r", hint: "Rolled 'r'" },
+    { greek: "Σ σ/ς", english: "Sigma", romanized: "S s", hint: "Like 's' in 'sun' (ς at end of word)" },
+    { greek: "Τ τ", english: "Tau", romanized: "T t", hint: "Like 't' in 'top'" },
+    { greek: "Υ υ", english: "Upsilon", romanized: "I i/Y y", hint: "Like 'ee' in 'see'" },
+    { greek: "Φ φ", english: "Phi", romanized: "F f", hint: "Like 'f' in 'fun'" },
+    { greek: "Χ χ", english: "Chi", romanized: "Ch ch/H h", hint: "Like 'ch' in Scottish 'loch'" },
+    { greek: "Ψ ψ", english: "Psi", romanized: "Ps ps", hint: "Like 'ps' in 'lips'" },
+    { greek: "Ω ω", english: "Omega", romanized: "O o", hint: "Like 'o' in 'pot' (same as omicron)" }
+  ],
+
+  // =====================================================
+  // VOWELS - Greek Vowel Letters
+  // =====================================================
+  vowels: [
+    { greek: "Α α", english: "Alpha (vowel)", romanized: "A a", hint: "Open vowel, like 'a' in 'father'" },
+    { greek: "Ε ε", english: "Epsilon (vowel)", romanized: "E e", hint: "Short 'e', like 'e' in 'bed'" },
+    { greek: "Η η", english: "Eta (vowel)", romanized: "I i", hint: "Sounds like 'ee' in modern Greek" },
+    { greek: "Ι ι", english: "Iota (vowel)", romanized: "I i", hint: "Like 'ee' in 'see'" },
+    { greek: "Ο ο", english: "Omicron (vowel)", romanized: "O o", hint: "Short 'o', like 'o' in 'pot'" },
+    { greek: "Υ υ", english: "Upsilon (vowel)", romanized: "I i", hint: "Sounds like 'ee' in modern Greek" },
+    { greek: "Ω ω", english: "Omega (vowel)", romanized: "O o", hint: "Same sound as omicron in modern Greek" }
+  ],
+
+  // =====================================================
+  // DIGRAPHS - Letter Combinations
+  // =====================================================
+  digraphs: [
+    { greek: "αι", english: "ai (sounds like 'e')", romanized: "e", hint: "Like 'e' in 'bed'" },
+    { greek: "ει", english: "ei (sounds like 'ee')", romanized: "i", hint: "Like 'ee' in 'see'" },
+    { greek: "οι", english: "oi (sounds like 'ee')", romanized: "i", hint: "Like 'ee' in 'see'" },
+    { greek: "υι", english: "yi (sounds like 'ee')", romanized: "i", hint: "Like 'ee' in 'see'" },
+    { greek: "ου", english: "ou (sounds like 'oo')", romanized: "ou", hint: "Like 'oo' in 'food'" },
+    { greek: "αυ", english: "av/af", romanized: "av/af", hint: "'av' before vowels, 'af' before voiceless consonants" },
+    { greek: "ευ", english: "ev/ef", romanized: "ev/ef", hint: "'ev' before vowels, 'ef' before voiceless consonants" },
+    { greek: "μπ", english: "mp (sounds like 'b')", romanized: "b", hint: "Like 'b' in 'boy' at start of word" },
+    { greek: "ντ", english: "nt (sounds like 'd')", romanized: "d/nd", hint: "Like 'd' at start, 'nd' in middle" },
+    { greek: "γκ", english: "gk (sounds like 'g')", romanized: "g/ng", hint: "Like 'g' at start, 'ng' in middle" },
+    { greek: "γγ", english: "gg (sounds like 'ng')", romanized: "ng", hint: "Like 'ng' in 'sing'" },
+    { greek: "τσ", english: "ts", romanized: "ts", hint: "Like 'ts' in 'bits'" },
+    { greek: "τζ", english: "tz (sounds like 'dz')", romanized: "dz", hint: "Like 'ds' in 'beds'" }
+  ],
 
   // =====================================================
   // BASICS - Greetings & Essentials

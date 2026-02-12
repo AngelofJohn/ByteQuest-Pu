@@ -120,7 +120,7 @@ const MAIN_STORY_QUESTS = {
     rewards: {
       xp: 35,
       gold: 25,
-      lessonsUnlocked: ["lesson_3", "lesson_4"], // -ment pattern, -able/-ible
+      lessonsUnlocked: ["lesson_3", "lesson_4"],
       items: ["bread"],
       reputation: { dawnmere: 15 }
     }

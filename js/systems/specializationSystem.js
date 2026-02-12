@@ -1,6 +1,6 @@
 /**
  * ByteQuest - Specialization System
- * Handles class specialization at level 5
+ * Handles class specialization at level 3
  */
 
 // Base class definition - everyone starts here
@@ -33,7 +33,7 @@ const SPECIALIZATION_CLASSES = {
     flavor: 'Words are your weapon, wisdom your shield.',
     isBaseClass: false,
     specializationOf: 'cleric',
-    unlockLevel: 5,
+    unlockLevel: 3,
     stats: {
       maxHp: 90,
       wisdom: 15,
@@ -54,7 +54,7 @@ const SPECIALIZATION_CLASSES = {
     flavor: 'Your resolve is unbreakable, your defense absolute.',
     isBaseClass: false,
     specializationOf: 'cleric',
-    unlockLevel: 5,
+    unlockLevel: 3,
     stats: {
       maxHp: 130,
       wisdom: 10,
@@ -67,31 +67,32 @@ const SPECIALIZATION_CLASSES = {
     bonus: '+30% max HP, 10% damage reduction'
   },
 
-  pathfinder: {
-    id: 'pathfinder',
-    name: 'Pathfinder',
-    icon: '🧭',
-    description: 'An explorer who discovers hidden paths',
-    flavor: 'Every road leads to new discoveries.',
+  rogue: {
+    id: 'rogue',
+    name: 'Rogue',
+    icon: '🗡️',
+    description: 'A cunning trickster who profits from every opportunity',
+    flavor: 'Fortune favors the bold — and the clever.',
     isBaseClass: false,
     specializationOf: 'cleric',
-    unlockLevel: 5,
+    unlockLevel: 3,
     stats: {
-      maxHp: 100,
-      wisdom: 12,
-      intelligence: 10
+      maxHp: 90,
+      wisdom: 8,
+      intelligence: 14
     },
     bonuses: {
-      travelSpeed: 1.5,
-      hiddenAreas: true
+      goldMultiplier: 1.25,
+      shopDiscount: 0.15,
+      lootBonus: 0.2
     },
-    bonus: 'Faster travel, access to hidden areas'
+    bonus: '+25% gold earned, 15% shop discount, 20% bonus loot chance'
   }
 };
 
 const SpecializationSystem = {
   QUEST_ID: 'orders_call',
-  UNLOCK_LEVEL: 5,
+  UNLOCK_LEVEL: 3,
 
   /**
    * Check if specialization quest should be available
@@ -259,6 +260,15 @@ const SpecializationSystem = {
         GameState.player.maxHp = Math.floor(GameState.player.maxHp * spec.bonuses.maxHpMultiplier);
         GameState.player.hp = GameState.player.maxHp;
       }
+      if (spec.bonuses.goldMultiplier) {
+        GameState.goldMultiplier = (GameState.goldMultiplier || 1.0) * spec.bonuses.goldMultiplier;
+      }
+      if (spec.bonuses.shopDiscount) {
+        GameState.player.classShopDiscount = spec.bonuses.shopDiscount;
+      }
+      if (spec.bonuses.lootBonus) {
+        GameState.player.classLootBonus = spec.bonuses.lootBonus;
+      }
     }
 
     // Complete the quest
@@ -361,7 +371,7 @@ const SPECIALIZATION_QUEST = {
       id: 'choose_path',
       description: 'Choose your specialization',
       type: 'choice',
-      choices: ['sage', 'protector', 'pathfinder']
+      choices: ['sage', 'protector', 'rogue']
     }
   ],
   rewards: {

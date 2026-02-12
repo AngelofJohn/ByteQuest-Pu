@@ -190,6 +190,20 @@ const RESOURCE_ITEMS = {
     maxStack: 99,
     sellPrice: 18,
     craftingTier: 3
+  },
+
+  // ===== CRAFTING SUPPLIES =====
+  empty_bottle: {
+    id: 'empty_bottle',
+    name: 'Empty Bottle',
+    icon: '🧴',
+    type: 'material',
+    category: 'crafting_supply',
+    description: 'A glass bottle for holding potions.',
+    stackable: true,
+    maxStack: 99,
+    sellPrice: 2,
+    craftingTier: 1
   }
 };
 

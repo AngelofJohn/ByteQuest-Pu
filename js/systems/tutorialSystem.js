@@ -6,41 +6,56 @@
 // =====================================================
 
 const TutorialTips = {
-  clickNpc: {
-    icon: '👆',
-    title: 'Talk to NPCs',
-    content: 'Click on characters to interact with them. Try talking to Isora, the village elder!',
-    position: 'right'
+  // === CORE TUTORIAL FLOW (shown in order) ===
+  welcomeToDawnmere: {
+    icon: '👋',
+    title: 'Welcome to Dawnmere',
+    content: 'Click on characters with names to talk to them. Start by speaking with Isora, the village elder!',
+    position: 'bottom'
   },
   acceptQuest: {
     icon: '📜',
-    title: 'Accept Quests',
+    title: 'Quests',
     content: 'Quests give you goals and rewards. Click "Accept" to take on this quest!',
     position: 'left'
   },
-  questPanel: {
-    icon: '📋',
-    title: 'Quest Log',
-    content: 'Click the Quests button to view your active quests and objectives.',
-    position: 'right'
-  },
-  startLesson: {
+  lessonBasics: {
     icon: '📚',
-    title: 'How Lessons Work',
-    content: 'Answer questions correctly to progress. You must get each question right before moving on. Wrong answers cost HP, but you can try again! Tip: Use number keys 1-4 to answer quickly.',
-    position: 'bottom'
+    title: 'Vocabulary Lessons',
+    content: 'Select the correct translation. Wrong answers cost HP! Use number keys 1-4 for quick answers.',
+    position: 'top'
   },
   wrongAnswer: {
     icon: '❤️',
     title: 'Watch Your Health!',
-    content: 'Wrong answers cost HP. If you run out, you\'ll need to review words to recover.',
+    content: 'Wrong answers cost HP. If you run out, you\'ll need to recover before continuing.',
     position: 'top'
   },
   questComplete: {
     icon: '🎉',
     title: 'Quest Complete!',
-    content: 'You earned XP, gold, and reputation. Keep completing quests to level up and unlock new areas!',
+    content: 'You earned XP, gold, and reputation! Keep completing quests to level up and unlock new areas.',
     position: 'bottom'
+  },
+  useHint: {
+    icon: '💡',
+    title: 'Need Help?',
+    content: 'Click the hint button to reveal part of the answer. Your Insight stat gives more hint charges!',
+    position: 'top'
+  },
+  practiceReview: {
+    icon: '🔄',
+    title: 'Practice Makes Perfect',
+    content: 'Review words you\'ve learned to keep them fresh. Spaced repetition helps you remember long-term!',
+    position: 'bottom'
+  },
+
+  // === SECONDARY TUTORIALS (UI features) ===
+  questPanel: {
+    icon: '📋',
+    title: 'Quest Log',
+    content: 'Click the Quests button to view your active quests and objectives.',
+    position: 'right'
   },
   viewStats: {
     icon: '📊',
@@ -54,36 +69,6 @@ const TutorialTips = {
     content: 'Build reputation with factions by completing quests. Higher standing unlocks shop discounts, special quests, unique items, and titles!',
     position: 'bottom'
   },
-  syllableQuestion: {
-    icon: '🔤',
-    title: 'Syllable Puzzle',
-    content: 'Click the syllables in the correct order to spell the French word. Click a syllable in your answer to remove it.',
-    position: 'top'
-  },
-  encounter: {
-    icon: '🛤️',
-    title: 'Road Encounter',
-    content: 'During your journey, you\'ll face challenges like reading signs and speaking with travelers. Answer correctly to proceed safely!',
-    position: 'bottom'
-  },
-  mapTravel: {
-    icon: '🗺️',
-    title: 'World Map',
-    content: 'Click on unlocked locations to travel. New areas unlock as you complete quests and build reputation.',
-    position: 'bottom'
-  },
-  useHint: {
-    icon: '💡',
-    title: 'Hints Available',
-    content: 'Stuck on a question? Click the hint button to reveal part of the answer. Your Insight stat gives you more hint charges!',
-    position: 'top'
-  },
-  villageProjects: {
-    icon: '🏗️',
-    title: 'The Game Loop',
-    content: 'This is the core of ByteQuest: Complete lessons to practice French, then gather resources using what you learned. Contribute resources to village projects to unlock permanent bonuses for everyone!',
-    position: 'bottom'
-  },
   gathering: {
     icon: '⛏️',
     title: 'Gathering Resources',
@@ -95,6 +80,20 @@ const TutorialTips = {
     title: 'Your Spellbook',
     content: 'The Spellbook contains grammar references and lore pages you unlock through quests. Press S or click the Spellbook button in the sidebar to review what you\'ve learned!',
     position: 'right'
+  },
+
+  // === FUTURE TUTORIALS (not currently triggered) ===
+  mapTravel: {
+    icon: '🗺️',
+    title: 'World Map',
+    content: 'Click on unlocked locations to travel. New areas unlock as you complete quests and build reputation.',
+    position: 'bottom'
+  },
+  villageProjects: {
+    icon: '🏗️',
+    title: 'Village Projects',
+    content: 'Contribute resources to village projects to unlock permanent bonuses for everyone!',
+    position: 'bottom'
   }
 };
 

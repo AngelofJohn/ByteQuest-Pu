@@ -48,7 +48,7 @@ const GREEK_QUESTS = {
     },
     rewards: {
       xp: 50,
-      gold: 0,
+      gold: 20,
       spellbookPages: ["alphabet"],
       unlocks: {
         quests: ["al_02_vowels"]
@@ -86,7 +86,7 @@ const GREEK_QUESTS = {
     },
     rewards: {
       xp: 40,
-      gold: 0,
+      gold: 15,
       spellbookPages: ["alphabet_vowels"],
       unlocks: {
         quests: ["al_03_digraphs"]
@@ -124,7 +124,7 @@ const GREEK_QUESTS = {
     },
     rewards: {
       xp: 50,
-      gold: 0,
+      gold: 20,
       spellbookPages: ["digraphs"],
       unlocks: {
         quests: ["vl_01_greetings"]
@@ -167,7 +167,7 @@ const GREEK_QUESTS = {
     },
     rewards: {
       xp: 60,
-      gold: 0,
+      gold: 25,
       spellbookPages: ["greetings"],
       gatheringUnlock: "herbalism",
       unlocks: {
@@ -206,7 +206,7 @@ const GREEK_QUESTS = {
     },
     rewards: {
       xp: 70,
-      gold: 0,
+      gold: 25,
       spellbookPages: ["pronouns", "introductions"],
       unlocks: {
         quests: ["vl_03_essentials"]
@@ -244,7 +244,7 @@ const GREEK_QUESTS = {
     },
     rewards: {
       xp: 80,
-      gold: 0,
+      gold: 30,
       spellbookPages: ["essentials", "courtesy"],
       unlocks: {
         quests: ["vl_04_numbers"]
@@ -282,7 +282,7 @@ const GREEK_QUESTS = {
     },
     rewards: {
       xp: 55,
-      gold: 0,
+      gold: 20,
       spellbookPages: ["numbers"],
       unlocks: {
         quests: ["vl_05_colors"]
@@ -320,7 +320,7 @@ const GREEK_QUESTS = {
     },
     rewards: {
       xp: 55,
-      gold: 0,
+      gold: 20,
       spellbookPages: ["colors"],
       unlocks: {
         quests: ["vl_06_days"]
@@ -358,7 +358,7 @@ const GREEK_QUESTS = {
     },
     rewards: {
       xp: 50,
-      gold: 0,
+      gold: 20,
       spellbookPages: ["days"],
       unlocks: {
         quests: ["vl_07_family"]
@@ -396,7 +396,7 @@ const GREEK_QUESTS = {
     },
     rewards: {
       xp: 90,
-      gold: 0,
+      gold: 30,
       spellbookPages: ["family"]
     }
   },
@@ -435,7 +435,7 @@ const GREEK_QUESTS = {
     },
     rewards: {
       xp: 100,
-      gold: 0,
+      gold: 35,
       spellbookPages: ["verb_eime"],
       unlocks: {
         quests: ["gl_02_to_have"]
@@ -473,7 +473,7 @@ const GREEK_QUESTS = {
     },
     rewards: {
       xp: 100,
-      gold: 0,
+      gold: 35,
       spellbookPages: ["verb_echo"],
       unlocks: {
         quests: ["gl_03_gender"]
@@ -511,7 +511,7 @@ const GREEK_QUESTS = {
     },
     rewards: {
       xp: 120,
-      gold: 0,
+      gold: 40,
       spellbookPages: ["gender", "articles"],
       unlocks: {
         quests: ["gl_04_cases"]
@@ -549,7 +549,7 @@ const GREEK_QUESTS = {
     },
     rewards: {
       xp: 150,
-      gold: 0,
+      gold: 50,
       spellbookPages: ["cases_intro"]
     }
   },
@@ -588,7 +588,7 @@ const GREEK_QUESTS = {
     },
     rewards: {
       xp: 100,
-      gold: 0,
+      gold: 35,
       spellbookPages: ["food"]
     }
   }

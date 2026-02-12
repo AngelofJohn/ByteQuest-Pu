@@ -9,8 +9,17 @@
 
 // Helper to get current language
 function getMinigameLanguage() {
-  if (typeof LANGUAGE_CONFIG !== 'undefined' && LANGUAGE_CONFIG.currentLanguage) {
-    return LANGUAGE_CONFIG.currentLanguage;
+  // Check LANGUAGE_CONFIG.current (the correct property name)
+  if (typeof LANGUAGE_CONFIG !== 'undefined' && LANGUAGE_CONFIG.current) {
+    return LANGUAGE_CONFIG.current;
+  }
+  // Fallback: check CourseDataManager
+  if (typeof CourseDataManager !== 'undefined' && CourseDataManager.currentCourse) {
+    return CourseDataManager.currentCourse;
+  }
+  // Fallback: check languageManager directly
+  if (typeof languageManager !== 'undefined' && languageManager.current) {
+    return languageManager.current;
   }
   return 'french'; // Default fallback
 }
@@ -21,13 +30,18 @@ function getResourceVocabulary() {
   if (lang === 'greek' && typeof RESOURCE_VOCABULARY_GREEK !== 'undefined') {
     return RESOURCE_VOCABULARY_GREEK;
   }
+  if (lang === 'dutch' && typeof RESOURCE_VOCABULARY_DUTCH !== 'undefined') {
+    return RESOURCE_VOCABULARY_DUTCH;
+  }
   return RESOURCE_VOCABULARY_FRENCH;
 }
 
 // Helper to get the target language name for prompts
 function getTargetLanguageName() {
   const lang = getMinigameLanguage();
-  return lang === 'greek' ? 'Greek' : 'French';
+  if (lang === 'greek') return 'Greek';
+  if (lang === 'dutch') return 'Dutch';
+  return 'French';
 }
 
 // =====================================================
@@ -372,6 +386,177 @@ const RESOURCE_VOCABULARY_GREEK = {
   }
 };
 
+// =====================================================
+// DUTCH VOCABULARY
+// =====================================================
+
+const RESOURCE_VOCABULARY_DUTCH = {
+  mining: {
+    tier1: [
+      { dutch: "het ijzer", english: "iron", hint: "Common metal" },
+      { dutch: "het koper", english: "copper", hint: "Reddish metal" },
+      { dutch: "de steen", english: "stone", hint: "Rock" },
+      { dutch: "het metaal", english: "metal", hint: "Like English" },
+      { dutch: "de rots", english: "rock", hint: "Hard material" },
+      { dutch: "hard", english: "hard", hint: "Not soft" },
+      { dutch: "zwaar", english: "heavy", hint: "Has weight" },
+      { dutch: "graven", english: "to dig", hint: "Make a hole" }
+    ],
+    tier2: [
+      { dutch: "het zilver", english: "silver", hint: "Precious white metal" },
+      { dutch: "het goud", english: "gold", hint: "Precious yellow metal" },
+      { dutch: "de mijn", english: "mine", hint: "Underground excavation" },
+      { dutch: "de tunnel", english: "tunnel", hint: "Underground passage" },
+      { dutch: "diep", english: "deep", hint: "Far down" },
+      { dutch: "donker", english: "dark", hint: "No light" },
+      { dutch: "schijnen", english: "to shine", hint: "Emit light" },
+      { dutch: "kostbaar", english: "precious", hint: "Valuable" }
+    ],
+    tier3: [
+      { dutch: "de hamer", english: "hammer", hint: "Hitting tool" },
+      { dutch: "het houweel", english: "pickaxe", hint: "Mining tool" },
+      { dutch: "het erts", english: "ore", hint: "Raw metal" },
+      { dutch: "smelten", english: "to melt", hint: "Turn solid to liquid" },
+      { dutch: "het kristal", english: "crystal", hint: "Clear stone" },
+      { dutch: "de edelsteen", english: "gem", hint: "Precious stone" },
+      { dutch: "winnen", english: "to extract", hint: "Remove from" },
+      { dutch: "de afzetting", english: "deposit", hint: "Where ore is found" }
+    ]
+  },
+
+  woodcutting: {
+    tier1: [
+      { dutch: "de boom", english: "tree", hint: "Large plant" },
+      { dutch: "het hout", english: "wood", hint: "Tree material" },
+      { dutch: "het bos", english: "forest", hint: "Many trees" },
+      { dutch: "de tak", english: "branch", hint: "Tree arm" },
+      { dutch: "groen", english: "green", hint: "Leaf color" },
+      { dutch: "groot", english: "tall/big", hint: "Not small" },
+      { dutch: "het blad", english: "leaf", hint: "On branches" },
+      { dutch: "snijden", english: "to cut", hint: "Separate with blade" }
+    ],
+    tier2: [
+      { dutch: "de stam", english: "trunk", hint: "Tree body" },
+      { dutch: "de bijl", english: "axe", hint: "Cutting tool" },
+      { dutch: "de eik", english: "oak", hint: "Strong tree" },
+      { dutch: "de den", english: "pine", hint: "Evergreen tree" },
+      { dutch: "vallen", english: "to fall", hint: "Go down" },
+      { dutch: "stevig", english: "solid", hint: "Strong" },
+      { dutch: "droog", english: "dry", hint: "Not wet" },
+      { dutch: "vochtig", english: "damp", hint: "Slightly wet" }
+    ],
+    tier3: [
+      { dutch: "de zaag", english: "saw", hint: "Toothed blade" },
+      { dutch: "de schors", english: "bark", hint: "Tree skin" },
+      { dutch: "de stomp", english: "stump", hint: "After cutting" },
+      { dutch: "de wortel", english: "root", hint: "Underground" },
+      { dutch: "oud", english: "ancient", hint: "Very old" },
+      { dutch: "zeldzaam", english: "rare", hint: "Hard to find" },
+      { dutch: "snijden", english: "to carve", hint: "Shape wood" },
+      { dutch: "de timmerman", english: "carpenter", hint: "Wood worker" }
+    ]
+  },
+
+  hunting: {
+    tier1: [
+      { dutch: "het dier", english: "animal", hint: "Living creature" },
+      { dutch: "jagen", english: "to hunt", hint: "Pursue prey" },
+      { dutch: "snel", english: "fast", hint: "Quick" },
+      { dutch: "langzaam", english: "slow", hint: "Not fast" },
+      { dutch: "rennen", english: "to run", hint: "Move fast" },
+      { dutch: "springen", english: "to jump", hint: "Leap" },
+      { dutch: "sterk", english: "strong", hint: "Powerful" },
+      { dutch: "zwak", english: "weak", hint: "Not strong" }
+    ],
+    tier2: [
+      { dutch: "het everzwijn", english: "boar", hint: "Wild pig" },
+      { dutch: "de wolf", english: "wolf", hint: "Wild dog" },
+      { dutch: "de boog", english: "bow", hint: "Shoots arrows" },
+      { dutch: "de pijl", english: "arrow", hint: "Projectile" },
+      { dutch: "stil", english: "silent", hint: "No sound" },
+      { dutch: "voorzichtig", english: "careful", hint: "Cautious" },
+      { dutch: "volgen", english: "to follow", hint: "Go after" },
+      { dutch: "wachten", english: "to wait", hint: "Be patient" }
+    ],
+    tier3: [
+      { dutch: "de beer", english: "bear", hint: "Large animal" },
+      { dutch: "het hert", english: "deer", hint: "Has antlers" },
+      { dutch: "het spoor", english: "track", hint: "Trail" },
+      { dutch: "de val", english: "trap", hint: "Catches prey" },
+      { dutch: "de prooi", english: "prey", hint: "Hunted animal" },
+      { dutch: "de jager", english: "hunter", hint: "One who hunts" },
+      { dutch: "wild", english: "wild", hint: "Not tame" },
+      { dutch: "gevaarlijk", english: "dangerous", hint: "Could harm" }
+    ]
+  },
+
+  herbalism: {
+    tier1: [
+      { dutch: "de plant", english: "plant", hint: "Grows in soil" },
+      { dutch: "de bloem", english: "flower", hint: "Colorful bloom" },
+      { dutch: "het blad", english: "leaf", hint: "Green part" },
+      { dutch: "het gras", english: "grass", hint: "Ground cover" },
+      { dutch: "rood", english: "red", hint: "Color" },
+      { dutch: "geel", english: "yellow", hint: "Color" },
+      { dutch: "geurig", english: "fragrant", hint: "Smells nice" },
+      { dutch: "plukken", english: "to pick", hint: "Gather by hand" }
+    ],
+    tier2: [
+      { dutch: "de wortel", english: "root", hint: "Underground" },
+      { dutch: "de stengel", english: "stem", hint: "Plant support" },
+      { dutch: "de tuin", english: "garden", hint: "Plant area" },
+      { dutch: "het bloemblad", english: "petal", hint: "Flower part" },
+      { dutch: "groeien", english: "to grow", hint: "Get bigger" },
+      { dutch: "vers", english: "fresh", hint: "Newly picked" },
+      { dutch: "drogen", english: "to dry", hint: "Remove moisture" },
+      { dutch: "genezen", english: "to heal", hint: "Make better" }
+    ],
+    tier3: [
+      { dutch: "het zaad", english: "seed", hint: "Plant beginning" },
+      { dutch: "het stuifmeel", english: "pollen", hint: "Yellow powder" },
+      { dutch: "het sap", english: "sap", hint: "Plant blood" },
+      { dutch: "het middel", english: "remedy", hint: "Medicine" },
+      { dutch: "het gif", english: "poison", hint: "Harmful" },
+      { dutch: "het elixer", english: "elixir", hint: "Magic drink" },
+      { dutch: "krachtig", english: "powerful", hint: "Strong effect" },
+      { dutch: "de kruidenkenner", english: "herbalist", hint: "Plant expert" }
+    ]
+  },
+
+  fishing: {
+    tier1: [
+      { dutch: "de vis", english: "fish", hint: "Swims" },
+      { dutch: "het water", english: "water", hint: "Liquid" },
+      { dutch: "de rivier", english: "river", hint: "Flowing water" },
+      { dutch: "het meer", english: "lake", hint: "Still water" },
+      { dutch: "zwemmen", english: "to swim", hint: "Move in water" },
+      { dutch: "nat", english: "wet", hint: "Covered in water" },
+      { dutch: "diep", english: "deep", hint: "Far down" },
+      { dutch: "kalm", english: "calm", hint: "Peaceful" }
+    ],
+    tier2: [
+      { dutch: "de zee", english: "sea", hint: "Salt water" },
+      { dutch: "vissen", english: "to fish", hint: "Catch fish" },
+      { dutch: "de boot", english: "boat", hint: "Floats" },
+      { dutch: "de hengel", english: "fishing rod", hint: "Pole" },
+      { dutch: "het aas", english: "bait", hint: "Lure" },
+      { dutch: "bijten", english: "to bite", hint: "Fish action" },
+      { dutch: "trekken", english: "to pull", hint: "Bring in" },
+      { dutch: "geduldig", english: "patient", hint: "Can wait" }
+    ],
+    tier3: [
+      { dutch: "de haak", english: "hook", hint: "Sharp curve" },
+      { dutch: "het net", english: "net", hint: "Mesh catcher" },
+      { dutch: "de forel", english: "trout", hint: "Freshwater fish" },
+      { dutch: "de zalm", english: "salmon", hint: "Pink fish" },
+      { dutch: "de visser", english: "fisherman", hint: "One who fishes" },
+      { dutch: "de schub", english: "scale", hint: "Fish skin" },
+      { dutch: "glad", english: "slippery", hint: "Hard to hold" },
+      { dutch: "spartelen", english: "to wriggle", hint: "Fish movement" }
+    ]
+  }
+};
+
 // Alias for backward compatibility
 const RESOURCE_VOCABULARY = RESOURCE_VOCABULARY_FRENCH;
 
@@ -441,7 +626,9 @@ class ResourceMinigame {
   // Get the target language word from a vocabulary item
   getTargetWord(word) {
     const lang = getMinigameLanguage();
-    return lang === 'greek' ? word.greek : word.french;
+    if (lang === 'greek') return word.greek;
+    if (lang === 'dutch') return word.dutch;
+    return word.french;
   }
 
   generateQuestion() {

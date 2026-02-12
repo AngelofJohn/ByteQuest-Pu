@@ -14,6 +14,11 @@ class LanguageManager {
         name: 'Ελληνικά',
         englishName: 'Greek',
         flag: '🇬🇷'
+      },
+      dutch: {
+        name: 'Nederlands',
+        englishName: 'Dutch',
+        flag: '🇳🇱'
       }
     };
   }
@@ -123,6 +128,10 @@ const LANGUAGE_CONFIG = {
   },
   set current(value) {
     languageManager.current = value;
+  },
+  // Alias for backward compatibility (some code may use currentLanguage)
+  get currentLanguage() {
+    return languageManager.current;
   },
   get languages() {
     return languageManager.languages;

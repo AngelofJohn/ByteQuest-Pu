@@ -50,6 +50,25 @@ const COURSE_MANIFEST = {
       }
     },
 
+    dutch: {
+      id: 'dutch',
+      name: 'Dutch',
+      nativeName: 'Nederlands',
+      flag: '🇳🇱',
+      available: true,
+      scripts: [
+        'data/courses/dutch/vocabulary.js',
+        'data/courses/dutch/quests.js',
+        'data/courses/dutch/spellbook.js'
+      ],
+      vars: {
+        quests: 'DUTCH_QUESTS',
+        vocab: 'DUTCH_VOCAB',
+        grammar: 'DUTCH_GRAMMAR',
+        spellbook: 'DUTCH_SPELLBOOK'
+      }
+    },
+
     spanish: {
       id: 'spanish',
       name: 'Spanish',

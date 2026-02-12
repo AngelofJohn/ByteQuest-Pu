@@ -215,6 +215,18 @@ class AccountProgressionConfig {
         tier: 3,
         oneTime: true
       },
+      // RESOURCE VALUE MULTIPLIER
+      {
+        id: 'resource_value_double',
+        name: "Appraiser's Eye",
+        description: '2x sell value on all gathered resources',
+        requires: 'gathering_bonus_2',
+        cost: { gold: 100 },
+        effect: { resourceValueMultiplier: 2.0 },
+        category: 'resources',
+        tier: 3,
+        oneTime: true
+      },
       // ADDITIVE XP BONUSES
       {
         id: 'xp_bonus_1',
@@ -331,6 +343,28 @@ class AccountProgressionConfig {
         category: 'gameplay',
         tier: 3,
         oneTime: true
+      },
+      // STREAK SYSTEM UNLOCK
+      {
+        id: 'streak_system',
+        name: 'Streak Mastery',
+        description: 'Unlock streaks! Consecutive correct answers grant XP multipliers up to 4x.',
+        cost: { gold: 250 },
+        effect: { streakSystemUnlocked: true },
+        category: 'gameplay',
+        tier: 1,
+        oneTime: true
+      },
+      {
+        id: 'streak_persistence',
+        name: 'Unbroken Focus',
+        description: 'Streaks carry over between lessons. Your momentum persists across quests.',
+        requires: 'streak_system',
+        cost: { gold: 1500 },
+        effect: { streakPersistence: true },
+        category: 'gameplay',
+        tier: 2,
+        oneTime: true
       }
     ];
   }
@@ -431,9 +465,10 @@ class AccountProgressionConfig {
       dialectProgressMultiplier: 1.0,
       dialectXpMultiplier: 1.0,
       doubleLootChance: 0,
-      gatheringBonus: 0,      // Flat additive bonus to gathering yields
-      xpBonus: 0,             // Flat additive bonus to XP earned
-      maxStackSizeBonus: 0,   // Additive bonus to max stack size
+      gatheringBonus: 0,          // Flat additive bonus to gathering yields
+      resourceValueMultiplier: 1.0, // Multiplier for gathered resource sell prices
+      xpBonus: 0,                 // Flat additive bonus to XP earned
+      maxStackSizeBonus: 0,       // Additive bonus to max stack size
       unlockedFeatures: []
     };
   }

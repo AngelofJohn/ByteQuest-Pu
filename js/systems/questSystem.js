@@ -524,6 +524,15 @@ class QuestManager {
     rewards.items = [...(quest.rewards.items || [])];
     rewards.equipment = [...(quest.rewards.equipment || [])];
 
+    // Class loot bonus (Rogue: 20% chance for bonus gold)
+    const lootBonus = this.state.player.classLootBonus || 0;
+    if (lootBonus > 0 && rewards.gold > 0 && Math.random() < lootBonus) {
+      const bonusGold = Math.ceil(rewards.gold * 0.5);
+      rewards.gold += bonusGold;
+      rewards.lootBonusTriggered = true;
+      rewards.lootBonusGold = bonusGold;
+    }
+
     // Reputation rewards
     if (quest.rewards.reputation) {
       Object.entries(quest.rewards.reputation).forEach(([faction, amount]) => {
@@ -657,7 +666,11 @@ class QuestManager {
 
     // Apply gold to player
     if (rewards.gold > 0) {
-      this.state.player.gold = (this.state.player.gold || 0) + rewards.gold;
+      if (typeof addGoldSilent === 'function') {
+        addGoldSilent(rewards.gold);
+      } else {
+        this.state.player.gold = (this.state.player.gold || 0) + rewards.gold;
+      }
     }
 
     // Also track in courseData for course-specific stats

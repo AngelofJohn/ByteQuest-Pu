@@ -422,7 +422,7 @@ class SpellbookManager {
           <div class="artifact-card unlocked" data-artifact="${artifact.id}">
             <div class="artifact-icon">${artifact.icon}</div>
             <div class="artifact-name">${artifact.name}</div>
-            <div class="artifact-category">${artifact.category.replace(/_/g, ' ')}</div>
+            <div class="artifact-category">${(artifact.era || '').replace(/_/g, ' ')}</div>
           </div>
         `;
       } else {

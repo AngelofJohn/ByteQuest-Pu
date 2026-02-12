@@ -17,7 +17,7 @@ const LOCATION_DEFINITIONS = {
     color: '#a0785a',
     bgGradient: ['#1a3a5c', '#2a5a3c', '#3a6a4c'], // Sky to ground colors
     themes: ['community', 'beginnings'],
-    npcs: ['elder_maren', 'isora', 'rega', 'merchant', 'baker', 'brother_varek', 'tommen', 'old_jorel', 'settlers_rep'],
+    npcs: ['elder_maren', 'isora', 'rega', 'merchant', 'baker', 'brother_varek', 'tommen', 'old_jorel', 'settlers_rep', 'shrine_keeper'],
     // Quests are managed by QuestManager/CourseDataManager, not hardcoded here
     quests: [],
     hotspots: [
@@ -46,7 +46,7 @@ const LOCATION_DEFINITIONS = {
     color: '#c9a227',
     bgGradient: ['#87ceeb', '#f4d03f', '#8b7355'],
     themes: ['agriculture', 'nature'],
-    npcs: ['dave', 'lyra', 'venn', 'rask', 'the_veiled_one', 'sage_aldric'],
+    npcs: ['dave', 'lyra', 'venn', 'rask', 'the_veiled_one', 'sage_aldric', 'shepherd_marcus', 'healer_mira', 'merchant_henri'],
     // Quests are managed by QuestManager/CourseDataManager, not hardcoded here
     quests: [],
     hotspots: [

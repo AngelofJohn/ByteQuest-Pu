@@ -18,10 +18,10 @@ const LessonSystem = {
     xpPerfectBonus: 25,
     // HP damage for incorrect answers (scales with difficulty)
     damagePerWrong: {
-      easy: 0,       // No damage on easy
-      normal: 5,     // 5 HP per wrong answer
-      hard: 10,      // 10 HP per wrong answer
-      nightmare: 15  // 15 HP per wrong answer
+      easy: 0,       // No damage on easy (practice mode)
+      normal: 10,    // 10 HP per wrong answer (~4 mistakes at start)
+      hard: 15,      // 15 HP per wrong answer (~2-3 mistakes at start)
+      nightmare: 20  // 20 HP per wrong answer (~2 mistakes at start)
     }
   },
 
@@ -52,6 +52,7 @@ const LessonSystem = {
     // Fallback: try common vocab variable names
     if (typeof FRENCH_VOCAB !== 'undefined') return FRENCH_VOCAB;
     if (typeof GREEK_VOCAB !== 'undefined') return GREEK_VOCAB;
+    if (typeof DUTCH_VOCAB !== 'undefined') return DUTCH_VOCAB;
 
     console.error('[LessonSystem] No vocabulary data found!');
     return {};
@@ -98,7 +99,8 @@ const LessonSystem = {
         'greek': 'greek',
         'spanish': 'spanish',
         'german': 'german',
-        'italian': 'italian'
+        'italian': 'italian',
+        'dutch': 'dutch'
       };
       return fieldMap[course] || 'target';
     }
@@ -120,9 +122,10 @@ const LessonSystem = {
     }
 
     // Get the vocab category from quest objectives
+    // Find the vocabulary_lesson objective (may not be the first one)
     let category = null;
     if (quest.objectives && quest.objectives.length > 0) {
-      const obj = quest.objectives[0];
+      const obj = quest.objectives.find(o => o.type === 'vocabulary_lesson') || quest.objectives[0];
 
       // Check for vocabularySource (newer format used by Greek)
       if (obj.vocabularySource) {
@@ -140,6 +143,11 @@ const LessonSystem = {
           category = this.lessonToCategory[obj.lesson];
         }
       }
+    }
+
+    // Fallback: use quest-level vocabCategory if objectives didn't provide one
+    if (!category && quest.vocabCategory) {
+      category = quest.vocabCategory;
     }
 
     this.currentLesson = {
@@ -168,6 +176,21 @@ const LessonSystem = {
     // Initialize streak tracking for this lesson
     if (typeof StreakSystem !== 'undefined') {
       StreakSystem.startLesson();
+    }
+
+    // Initialize hint tracking for this lesson
+    if (typeof GameState !== 'undefined') {
+      GameState.lessonState = GameState.lessonState || {};
+      GameState.lessonState.questions = this.questions;
+      GameState.lessonState.currentQuestion = 0;
+
+      if (typeof hintManager !== 'undefined' && hintManager) {
+        const hintInfo = hintManager.initializeForLesson();
+        GameState.lessonState.hintCharges = hintInfo.charges;
+        GameState.lessonState.maxHintCharges = hintInfo.maxCharges;
+        GameState.lessonState.hintsUsed = 0;
+        console.log('[LessonSystem] Hints initialized:', hintInfo.charges, 'charges');
+      }
     }
 
     // Show the lesson UI
@@ -260,13 +283,14 @@ const LessonSystem = {
       const options = this._shuffle([correctAnswer, ...wrongAnswers]);
 
       questions.push({
-        type: 'multiple_choice',
+        type: isToEnglish ? 'to_english' : 'to_target',
         prompt: isToEnglish
           ? `What does "${targetWord}" mean?`
           : `How do you say "${englishWord}" in ${languageName}?`,
         word: isToEnglish ? targetWord : englishWord,
         correctAnswer: correctAnswer,
-        options: options
+        options: options,
+        wordData: word  // Store full word data for hints
       });
     }
 
@@ -304,6 +328,20 @@ const LessonSystem = {
     if (typeof showModal === 'function') {
       showModal('lesson-modal', content);
     }
+
+    // Update hint display after modal is shown
+    setTimeout(() => {
+      if (typeof updateHintDisplay === 'function') {
+        updateHintDisplay();
+      }
+    }, 50);
+
+    // Show lesson basics tutorial for first-time players
+    if (!GameState.tutorial?.shownTips?.includes('lessonBasics')) {
+      setTimeout(() => {
+        showTutorialTip('lessonBasics', '.lesson-container', () => {});
+      }, 300);
+    }
   },
 
   /**
@@ -318,11 +356,19 @@ const LessonSystem = {
       </button>
     `).join('');
 
+    // Reset hint state for new question
+    if (typeof resetHintForQuestion === 'function') {
+      resetHintForQuestion();
+    }
+
     return `
       <div class="question-prompt">${question.prompt}</div>
       <div class="question-word">${question.word}</div>
       <div class="answer-options">
         ${optionsHtml}
+      </div>
+      <div class="hint-box">
+        💡 Loading hints...
       </div>
     `;
   },
@@ -370,18 +416,43 @@ const LessonSystem = {
 
   /**
    * Apply HP damage for wrong answer
-   * @returns {number} Amount of damage dealt
+   * @returns {number} Amount of damage dealt (0 if avoided)
    */
   _applyWrongAnswerDamage() {
     let damage = this._getDamageForDifficulty();
     if (damage <= 0) return 0;
+
+    // Show wrong answer tutorial for first-time players
+    if (!GameState.tutorial?.shownTips?.includes('wrongAnswer')) {
+      setTimeout(() => {
+        showTutorialTip('wrongAnswer', '.player-hp', () => {});
+      }, 100);
+    }
+
+    // Check Luck stat - chance to avoid damage entirely
+    if (typeof statsManager !== 'undefined' && statsManager.rollLuckAvoidDamage()) {
+      console.log('[LessonSystem] Luck proc! Damage avoided');
+      if (typeof showNotification === 'function') {
+        showNotification('Lucky! Damage avoided', 'success');
+      }
+      return 0;
+    }
+
+    // Apply Strength stat - reduces damage taken
+    if (typeof statsManager !== 'undefined') {
+      const reducedDamage = statsManager.calculateDamageTaken(damage);
+      if (reducedDamage < damage) {
+        console.log(`[LessonSystem] Strength reduced damage: ${damage} -> ${reducedDamage}`);
+      }
+      damage = reducedDamage;
+    }
 
     // Check for damage reduction from consumables
     if (typeof itemManager !== 'undefined' && itemManager.getActiveConsumableBonus) {
       const damageReduction = itemManager.getActiveConsumableBonus('damageReduction');
       if (damageReduction > 0) {
         const reducedDamage = Math.round(damage * (1 - damageReduction));
-        console.log(`[LessonSystem] Damage reduced by ${Math.round(damageReduction * 100)}%: ${damage} -> ${reducedDamage}`);
+        console.log(`[LessonSystem] Consumable reduced damage: ${damage} -> ${reducedDamage}`);
         damage = reducedDamage;
       }
     }
@@ -498,6 +569,11 @@ const LessonSystem = {
   nextQuestion() {
     this.currentQuestionIndex++;
 
+    // Update GameState.lessonState for HintManager
+    if (typeof GameState !== 'undefined' && GameState.lessonState) {
+      GameState.lessonState.currentQuestion = this.currentQuestionIndex;
+    }
+
     if (this.currentQuestionIndex >= this.questions.length) {
       this._finishLesson();
     } else {
@@ -515,6 +591,13 @@ const LessonSystem = {
       if (progressText) {
         progressText.textContent = `Question ${this.currentQuestionIndex + 1}/${this.questions.length}`;
       }
+
+      // Update hint display for new question
+      setTimeout(() => {
+        if (typeof updateHintDisplay === 'function') {
+          updateHintDisplay();
+        }
+      }, 50);
     }
   },
 
@@ -537,6 +620,16 @@ const LessonSystem = {
       const multipliedXP = StreakSystem.applyMultiplier(xpEarned);
       multiplierApplied = multipliedXP / xpEarned;
       xpEarned = Math.floor(multipliedXP);
+    }
+
+    // Apply Knowledge stat XP bonus
+    if (typeof statsManager !== 'undefined' && xpEarned > 0) {
+      const knowledgeBonus = statsManager.calculateXpBonus();
+      if (knowledgeBonus > 0) {
+        const originalXP = xpEarned;
+        xpEarned = Math.round(xpEarned * (1 + knowledgeBonus));
+        console.log(`[LessonSystem] Knowledge XP bonus: ${originalXP} -> ${xpEarned} (+${Math.round(knowledgeBonus * 100)}%)`);
+      }
     }
 
     // Apply consumable XP multipliers and bonuses
@@ -592,13 +685,16 @@ const LessonSystem = {
     if (passed && questId) {
       // Use QuestManager if available
       if (typeof GameState !== 'undefined' && GameState.questManager) {
-        // Complete the objective first
+        // Complete task and vocabulary_lesson objectives
         const quest = GameState.questManager.getQuest(questId);
-        if (quest && quest.objectives && quest.objectives.length > 0) {
-          GameState.questManager.completeObjective(questId, quest.objectives[0].id);
+        if (quest && quest.objectives) {
+          for (const obj of quest.objectives) {
+            if (obj.type === 'task' || obj.type === 'vocabulary_lesson') {
+              GameState.questManager.completeObjective(questId, obj.id);
+            }
+          }
         }
-        // This will auto-mark as READY_TO_TURN_IN
-        console.log('[LessonSystem] Quest marked ready to turn in:', questId);
+        console.log('[LessonSystem] Quest objectives completed:', questId);
 
         // Show notification to return to NPC
         if (typeof showNotification === 'function') {

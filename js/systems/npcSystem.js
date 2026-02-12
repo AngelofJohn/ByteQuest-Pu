@@ -123,6 +123,12 @@ const NPCSystem = {
       return;
     }
 
+    // Special handling for Memory Shrine
+    if (npc.isShrine) {
+      this._showShrineInteraction(npc);
+      return;
+    }
+
     // Check "meet" objectives - player talked to an NPC
     if (typeof GameState !== 'undefined' && GameState.questManager) {
       const meetResult = GameState.questManager.checkMeetObjectives(npcId);
@@ -283,24 +289,19 @@ const NPCSystem = {
    * Show selection when multiple active quests
    */
   _showActiveQuestSelection(npc, quests) {
-    const questList = quests.map(quest => `
-      <div class="quest-option quest-active" onclick="NPCSystem._showContinueQuestDialogue(NPCSystem._getNPCData('${npc.id}'), NPCSystem._getQuest('${quest.id}'))">
-        <span class="quest-icon">${quest.icon || '📜'}</span>
-        <span class="quest-name">${quest.name}</span>
-        <span class="quest-status">In Progress</span>
-      </div>
-    `).join('');
+    const questCards = quests.map(quest => this._renderQuestCard(quest, npc.id, 'active')).join('');
 
     const content = `
       <div class="npc-dialogue">
         <div class="npc-header">
           <span class="npc-name">${npc.name}</span>
+          <span class="npc-role">${npc.role || ''}</span>
         </div>
         <div class="dialogue-text">
           "You have lessons in progress. Which would you like to continue?"
         </div>
-        <div class="quest-list">
-          ${questList}
+        <div class="quest-selection">
+          ${questCards}
         </div>
         <div class="dialogue-actions">
           <button class="art-btn" onclick="hideModal('npc-dialogue-modal')">Not Now</button>
@@ -347,15 +348,27 @@ const NPCSystem = {
   _showNoQuestsDialogue(npc) {
     // Check if NPC has a shop
     const hasShop = typeof npcHasAnyShop === 'function' && npcHasAnyShop(npc.id);
+    // Check if NPC has trade network feature
+    const hasTradeNetwork = npc.features && npc.features.includes('trade_network');
 
     let shopButton = '';
     if (hasShop) {
       shopButton = `<button class="art-btn art-btn-gold" onclick="openShop('${npc.id}')">Browse Shop</button>`;
     }
 
-    const dialogueText = hasShop
-      ? (npc.dialogue?.shopGreeting || npc.dialogue?.greeting || "Welcome! Would you like to see what I have?")
-      : (npc.dialogue?.noQuest || "I have nothing for you right now. Come back later!");
+    let tradeButton = '';
+    if (hasTradeNetwork) {
+      tradeButton = `<button class="art-btn art-btn-gold" onclick="hideModal('npc-dialogue-modal'); openTradeNetwork();">Trade Contracts</button>`;
+    }
+
+    let dialogueText;
+    if (hasTradeNetwork) {
+      dialogueText = npc.dialogue?.tradeWelcome || "Looking for trade contracts? I have orders that need fulfilling.";
+    } else if (hasShop) {
+      dialogueText = npc.dialogue?.shopGreeting || npc.dialogue?.greeting || "Welcome! Would you like to see what I have?";
+    } else {
+      dialogueText = npc.dialogue?.noQuest || "I have nothing for you right now. Come back later!";
+    }
 
     const content = `
       <div class="npc-dialogue">
@@ -367,6 +380,7 @@ const NPCSystem = {
           ${dialogueText}
         </div>
         <div class="dialogue-actions">
+          ${tradeButton}
           ${shopButton}
           <button class="art-btn" onclick="hideModal('npc-dialogue-modal')">Goodbye</button>
         </div>
@@ -420,6 +434,13 @@ const NPCSystem = {
 
     if (typeof showModal === 'function') {
       showModal('npc-dialogue-modal', content);
+
+      // Show accept quest tutorial for first-time players
+      if (!GameState.tutorial?.shownTips?.includes('acceptQuest')) {
+        setTimeout(() => {
+          showTutorialTip('acceptQuest', '.art-btn-gold', () => {});
+        }, 300);
+      }
     }
   },
 
@@ -429,18 +450,19 @@ const NPCSystem = {
   _showQuestSelection(npc, quests) {
     // Check if NPC has a shop
     const hasShop = typeof npcHasAnyShop === 'function' && npcHasAnyShop(npc.id);
+    // Check if NPC has trade network feature
+    const hasTradeNetwork = npc.features && npc.features.includes('trade_network');
 
-    const questList = quests.map(quest => `
-      <div class="quest-option" onclick="NPCSystem.showQuestDetails('${npc.id}', '${quest.id}')">
-        <span class="quest-icon">${quest.icon || '📜'}</span>
-        <span class="quest-name">${quest.name}</span>
-        <span class="quest-arrow">▶</span>
-      </div>
-    `).join('');
+    const questCards = quests.map(quest => this._renderQuestCard(quest, npc.id)).join('');
 
     let shopButton = '';
     if (hasShop) {
       shopButton = `<button class="art-btn" onclick="openShop('${npc.id}')">Browse Shop</button>`;
+    }
+
+    let tradeButton = '';
+    if (hasTradeNetwork) {
+      tradeButton = `<button class="art-btn art-btn-gold" onclick="hideModal('npc-dialogue-modal'); openTradeNetwork();">Trade Contracts</button>`;
     }
 
     const content = `
@@ -452,10 +474,11 @@ const NPCSystem = {
         <div class="dialogue-text">
           ${npc.dialogue?.greeting || "I have several tasks that need attention..."}
         </div>
-        <div class="quest-list">
-          ${questList}
+        <div class="quest-selection">
+          ${questCards}
         </div>
         <div class="dialogue-actions">
+          ${tradeButton}
           ${shopButton}
           <button class="art-btn" onclick="hideModal('npc-dialogue-modal')">Goodbye</button>
         </div>
@@ -518,13 +541,7 @@ const NPCSystem = {
    * Show turn-in selection when multiple quests ready
    */
   _showTurnInSelection(npc, quests) {
-    const questList = quests.map(quest => `
-      <div class="quest-option quest-ready" onclick="NPCSystem._showTurnInDialogue(NPCSystem._getNPCData('${npc.id}'), NPCSystem._getQuest('${quest.id}'))">
-        <span class="quest-icon">✓</span>
-        <span class="quest-name">${quest.name}</span>
-        <span class="quest-status">Ready!</span>
-      </div>
-    `).join('');
+    const questCards = quests.map(quest => this._renderQuestCard(quest, npc.id, 'ready')).join('');
 
     const content = `
       <div class="npc-dialogue">
@@ -535,8 +552,8 @@ const NPCSystem = {
         <div class="dialogue-text">
           "You've completed some tasks! Let's see what you've accomplished..."
         </div>
-        <div class="quest-list">
-          ${questList}
+        <div class="quest-selection">
+          ${questCards}
         </div>
         <div class="dialogue-actions">
           <button class="art-btn" onclick="hideModal('npc-dialogue-modal')">Goodbye</button>
@@ -558,6 +575,96 @@ const NPCSystem = {
     if (npc && quest) {
       this._showQuestDialogue(npc, quest);
     }
+  },
+
+  /**
+   * Render a quest card for selection lists
+   * @param {Object} quest - Quest data
+   * @param {string} npcId - NPC ID for click handler
+   * @param {string} status - Optional status: 'available', 'active', 'ready'
+   */
+  _renderQuestCard(quest, npcId, status = 'available') {
+    // Determine quest type for badge
+    const questType = this._getQuestType(quest);
+    const typeBadge = this._getTypeBadge(questType);
+
+    // Build rewards display
+    let rewardsHtml = '';
+    if (quest.rewards) {
+      const rewards = [];
+      if (quest.rewards.xp) {
+        rewards.push(`<span class="reward reward-xp">+${quest.rewards.xp} XP</span>`);
+      }
+      if (quest.rewards.gold) {
+        rewards.push(`<span class="reward reward-gold">+${quest.rewards.gold} Gold</span>`);
+      }
+      rewardsHtml = rewards.join('');
+    }
+
+    // Status indicator
+    let statusHtml = '';
+    if (status === 'ready') {
+      statusHtml = '<span class="quest-card-status status-ready">Ready!</span>';
+    } else if (status === 'active') {
+      statusHtml = '<span class="quest-card-status status-active">In Progress</span>';
+    }
+
+    // Card class based on status
+    const cardClass = status === 'ready' ? 'quest-ready' : status === 'active' ? 'quest-active' : '';
+
+    // Click handler based on status
+    let clickHandler = '';
+    if (status === 'ready') {
+      clickHandler = `NPCSystem._showTurnInDialogue(NPCSystem._getNPCData('${npcId}'), NPCSystem._getQuest('${quest.id}'))`;
+    } else if (status === 'active') {
+      clickHandler = `NPCSystem._showContinueQuestDialogue(NPCSystem._getNPCData('${npcId}'), NPCSystem._getQuest('${quest.id}'))`;
+    } else {
+      clickHandler = `NPCSystem.showQuestDetails('${npcId}', '${quest.id}')`;
+    }
+
+    return `
+      <div class="quest-card ${cardClass}" onclick="${clickHandler}">
+        <div class="quest-card-header">
+          <span class="quest-card-icon">${quest.icon || '📜'}</span>
+          <div class="quest-card-info">
+            <div class="quest-card-title">
+              ${quest.name}
+              ${statusHtml}
+            </div>
+            <div class="quest-card-desc">${quest.description || ''}</div>
+          </div>
+          <span class="quest-card-arrow">${status === 'ready' ? '✓' : '▶'}</span>
+        </div>
+        <div class="quest-card-footer">
+          <div class="quest-card-rewards">${rewardsHtml}</div>
+          ${typeBadge}
+        </div>
+      </div>
+    `;
+  },
+
+  /**
+   * Determine quest type from quest data
+   */
+  _getQuestType(quest) {
+    if (quest.type === 'lesson') return 'lesson';
+    if (quest.objectives?.some(obj => obj.type === 'vocabulary_lesson')) return 'lesson';
+    if (quest.objectives?.some(obj => obj.type === 'gather')) return 'gather';
+    if (quest.id?.startsWith('ms_')) return 'story';
+    return 'task';
+  },
+
+  /**
+   * Get badge HTML for quest type
+   */
+  _getTypeBadge(type) {
+    const badges = {
+      lesson: '<span class="quest-type-badge type-lesson">Lesson</span>',
+      story: '<span class="quest-type-badge type-story">Story</span>',
+      gather: '<span class="quest-type-badge type-gather">Gather</span>',
+      task: '<span class="quest-type-badge type-task">Task</span>'
+    };
+    return badges[type] || badges.task;
   },
 
   /**
@@ -702,7 +809,11 @@ const NPCSystem = {
 
       // Award gold
       if (quest.rewards.gold) {
-        GameState.player.gold = (GameState.player.gold || 0) + quest.rewards.gold;
+        if (typeof addGoldSilent === 'function') {
+          addGoldSilent(quest.rewards.gold);
+        } else {
+          GameState.player.gold = (GameState.player.gold || 0) + quest.rewards.gold;
+        }
       }
     }
 
@@ -721,6 +832,227 @@ const NPCSystem = {
     }
 
     console.log('[NPCSystem] Quest turned in (fallback). Current XP:', GameState.player.xp, 'Level:', GameState.player.level);
+  },
+
+  // =====================================================
+  // Memory Shrine Interaction
+  // =====================================================
+
+  /**
+   * Show the Memory Shrine interaction UI
+   */
+  _showShrineInteraction(npc) {
+    // Get devotion tier for personalized greeting
+    const devotion = GameState.player?.shrineDevotio || { tier: 0 };
+    const tierKey = `tier${devotion.tier}`;
+    const greeting = npc.dialogue[tierKey] || npc.dialogue.greeting;
+
+    // Get stats for display
+    const stats = typeof LeitnerSystem !== 'undefined' ? LeitnerSystem.getStats() : { totalWords: 0, dueForReview: 0 };
+    const canPractice = stats.totalWords >= 4;
+
+    const content = `
+      <div class="shrine-interaction">
+        <div class="shrine-header">
+          <div class="shrine-keeper-portrait">
+            <span class="keeper-icon">${npc.icon}</span>
+          </div>
+          <div class="shrine-keeper-info">
+            <h2>${npc.name}</h2>
+            <p class="keeper-title">${npc.title}</p>
+          </div>
+        </div>
+
+        <div class="shrine-dialogue">
+          <p class="keeper-speech">"${greeting}"</p>
+        </div>
+
+        <div class="shrine-stats">
+          <div class="shrine-stat">
+            <span class="stat-value">${stats.totalWords}</span>
+            <span class="stat-label">Words Learned</span>
+          </div>
+          <div class="shrine-stat">
+            <span class="stat-value">${stats.dueForReview}</span>
+            <span class="stat-label">Due for Review</span>
+          </div>
+          <div class="shrine-stat">
+            <span class="stat-value">${devotion.totalSessions || 0}</span>
+            <span class="stat-label">Sessions</span>
+          </div>
+        </div>
+
+        <div class="shrine-options">
+          <button class="shrine-option-btn" onclick="NPCSystem._openShrineReview()">
+            <span class="option-icon">📚</span>
+            <span class="option-text">
+              <span class="option-name">Spaced Review</span>
+              <span class="option-desc">Review words due for practice</span>
+            </span>
+            ${stats.dueForReview > 0 ? `<span class="option-badge">${stats.dueForReview}</span>` : ''}
+          </button>
+
+          <button class="shrine-option-btn ${canPractice ? '' : 'disabled'}" ${canPractice ? 'onclick="NPCSystem._openShrineChallenges()"' : ''}>
+            <span class="option-icon">🧘</span>
+            <span class="option-text">
+              <span class="option-name">Practice Challenges</span>
+              <span class="option-desc">Meditation of Persistence & Trial of Swiftness</span>
+            </span>
+          </button>
+
+          <button class="shrine-option-btn" onclick="NPCSystem._openShrineBlessings()">
+            <span class="option-icon">✨</span>
+            <span class="option-text">
+              <span class="option-name">Blessings</span>
+              <span class="option-desc">Receive temporary buffs for your journey</span>
+            </span>
+          </button>
+
+          <button class="shrine-option-btn" onclick="NPCSystem._openShrineProgress()">
+            <span class="option-icon">📊</span>
+            <span class="option-text">
+              <span class="option-name">Devotion Progress</span>
+              <span class="option-desc">View your mastery and milestones</span>
+            </span>
+          </button>
+        </div>
+
+        <div class="shrine-footer">
+          <button class="pixel-btn" onclick="hideModal('npc-dialogue-modal')">Leave Shrine</button>
+        </div>
+      </div>
+    `;
+
+    if (typeof showModal === 'function') {
+      showModal('npc-dialogue-modal', content);
+    } else {
+      console.error('[NPCSystem] showModal function not available');
+    }
+  },
+
+  /**
+   * Open the spaced review system
+   */
+  _openShrineReview() {
+    console.log('[NPCSystem] Opening shrine review...');
+    if (typeof hideModal === 'function') {
+      hideModal('npc-dialogue-modal');
+    }
+    if (typeof PracticeUI !== 'undefined' && typeof PracticeUI.showPracticeHub === 'function') {
+      PracticeUI.showPracticeHub('practice');
+    } else {
+      console.error('[NPCSystem] PracticeUI not available');
+      if (typeof showNotification === 'function') {
+        showNotification('Practice system not available', 'error');
+      }
+    }
+  },
+
+  /**
+   * Open practice challenges (Meditation & Trial)
+   */
+  _openShrineChallenges() {
+    console.log('[NPCSystem] Opening shrine challenges...');
+    if (typeof hideModal === 'function') {
+      hideModal('npc-dialogue-modal');
+    }
+    // Show challenge selection
+    const content = `
+      <div class="shrine-challenges">
+        <div class="challenges-header">
+          <h2>🧘 Practice Challenges</h2>
+          <p>Train your vocabulary through focused meditation</p>
+        </div>
+
+        <div class="challenge-options">
+          <button class="challenge-card" onclick="NPCSystem._startShrineChallenge('streak')">
+            <span class="challenge-icon">🔥</span>
+            <h3>Meditation of Persistence</h3>
+            <p>Answer 15 questions. Build streaks for bonus XP!</p>
+            <span class="challenge-rewards">Rewards: XP + Streak Bonuses</span>
+          </button>
+
+          <button class="challenge-card" onclick="NPCSystem._startShrineChallenge('speed')">
+            <span class="challenge-icon">⚡</span>
+            <h3>Trial of Swiftness</h3>
+            <p>Answer 10 questions as fast as possible!</p>
+            <span class="challenge-rewards">Rewards: XP based on speed</span>
+          </button>
+        </div>
+
+        <div class="challenges-footer">
+          <button class="pixel-btn" onclick="NPCSystem.talkTo('shrine_keeper')">Back</button>
+        </div>
+      </div>
+    `;
+
+    if (typeof showModal === 'function') {
+      showModal('npc-dialogue-modal', content);
+    } else {
+      console.error('[NPCSystem] showModal function not available');
+    }
+  },
+
+  /**
+   * Start a shrine practice challenge
+   */
+  _startShrineChallenge(modeId) {
+    console.log('[NPCSystem] Starting shrine challenge:', modeId);
+    if (typeof hideModal === 'function') {
+      hideModal('npc-dialogue-modal');
+    }
+
+    // Initialize practice manager if needed
+    if (typeof practiceManager === 'undefined' && typeof initPracticeSystem === 'function') {
+      initPracticeSystem();
+    }
+
+    if (typeof practiceManager !== 'undefined' && typeof practiceManager.startPractice === 'function') {
+      setTimeout(() => {
+        practiceManager.startPractice(modeId);
+      }, 150);
+    } else {
+      console.error('[NPCSystem] practiceManager not available');
+      if (typeof showNotification === 'function') {
+        showNotification('Practice system not available', 'error');
+      }
+    }
+  },
+
+  /**
+   * Open blessings menu
+   */
+  _openShrineBlessings() {
+    console.log('[NPCSystem] Opening shrine blessings...');
+    if (typeof hideModal === 'function') {
+      hideModal('npc-dialogue-modal');
+    }
+    if (typeof memoryShrineManager !== 'undefined' && typeof memoryShrineManager.showBlessingsUI === 'function') {
+      memoryShrineManager.showBlessingsUI();
+    } else {
+      console.warn('[NPCSystem] memoryShrineManager.showBlessingsUI not available');
+      if (typeof showNotification === 'function') {
+        showNotification('Blessings system not available yet', 'warning');
+      }
+    }
+  },
+
+  /**
+   * Open devotion progress view
+   */
+  _openShrineProgress() {
+    console.log('[NPCSystem] Opening shrine progress...');
+    if (typeof hideModal === 'function') {
+      hideModal('npc-dialogue-modal');
+    }
+    if (typeof PracticeUI !== 'undefined' && typeof PracticeUI.showPracticeHub === 'function') {
+      PracticeUI.showPracticeHub('practice');
+    } else {
+      console.error('[NPCSystem] PracticeUI not available');
+      if (typeof showNotification === 'function') {
+        showNotification('Progress view not available', 'error');
+      }
+    }
   }
 };
 
@@ -776,6 +1108,279 @@ const NPC_DEFINITIONS = {
       // Side quests
       'sq_1_04_the_old_well'
     ]
+  },
+
+  forager_wynn: {
+    id: 'forager_wynn',
+    name: 'Wynn',
+    icon: '🌿',
+    title: 'Forager',
+    location: 'dawnmere',
+    dialogue: {
+      greeting: "The forest is generous today. I can smell rain coming — good for the herbs.",
+      questAvailable: "You look like someone who could learn a thing or two about living off the land.",
+      questActive: "Have you tried your hand at gathering yet? The land provides, but you have to learn to listen.",
+      questComplete: "Well done! You're a natural. The land has more to teach you yet.",
+      noQuests: "Keep practicing your gathering. There's always something new to find."
+    },
+    quests: ['sq_1_05_the_gatherers_path']
+  },
+
+  // =====================================================
+  // Zone 2 - The Haari Fields NPCs
+  // =====================================================
+
+  dave: {
+    id: 'dave',
+    name: 'Dave',
+    icon: '🧑‍🌾',
+    title: 'Head Horticulturist',
+    location: 'haari_fields',
+    dialogue: {
+      greeting: "Welcome to the Haari Fields! The golden wheat stretches as far as the eye can see.",
+      questAvailable: "Ah, you look eager to learn. I can teach you about life here in the fields.",
+      questActive: "How goes your studies? The land has much to teach us.",
+      questComplete: "Well done! You're becoming a true friend of the fields.",
+      noQuests: "The fields are peaceful today. Enjoy the golden view."
+    },
+    quests: [
+      'vl_08_family',
+      'sq_2_01_daves_burden'
+    ]
+  },
+
+  lyra: {
+    id: 'lyra',
+    name: 'Lyra',
+    icon: '🌿',
+    title: 'Apprentice Herbalist',
+    location: 'haari_fields',
+    dialogue: {
+      greeting: "Oh! Hello there. I was just tending to my herbs.",
+      questAvailable: "Would you like to learn about the plants we grow here? And perhaps... food?",
+      questActive: "Have you been practicing the vocabulary?",
+      questComplete: "Wonderful! You're learning so quickly!",
+      noQuests: "The garden is quiet today. Come back soon!"
+    },
+    quests: [
+      'vl_09_food',
+      'sq_2_02_lyras_garden'
+    ]
+  },
+
+  rask: {
+    id: 'rask',
+    name: 'Rask',
+    icon: '🏹',
+    title: 'Field Tracker',
+    location: 'haari_fields',
+    dialogue: {
+      greeting: "Keep your voice low. The fields have ears... and eyes.",
+      questAvailable: "A tracker must know the weather and the land. I can teach you.",
+      questActive: "Watch the sky. What do you see?",
+      questComplete: "Good. You're learning to read the signs.",
+      noQuests: "All is quiet on the horizon. For now."
+    },
+    quests: [
+      'vl_10_weather',
+      'sq_2_04_rasks_warning'
+    ]
+  },
+
+  shepherd_marcus: {
+    id: 'shepherd_marcus',
+    name: 'Marcus',
+    icon: '🐑',
+    title: 'Shepherd',
+    location: 'haari_fields',
+    dialogue: {
+      greeting: "Fine day for the flock, wouldn't you say?",
+      questAvailable: "The animals are my life! Let me teach you their names.",
+      questActive: "Have you been learning the animal words?",
+      questComplete: "Bravo! You speak the language of the farm now.",
+      noQuests: "The flock is content. Thank you again for your help."
+    },
+    quests: [
+      'vl_11_animals',
+      'sq_1_02_lost_flock'
+    ]
+  },
+
+  healer_mira: {
+    id: 'healer_mira',
+    name: 'Mira',
+    icon: '💊',
+    title: 'Field Healer',
+    location: 'haari_fields',
+    dialogue: {
+      greeting: "Greetings, traveler. Are you well? I tend to the health of all who work these fields.",
+      questAvailable: "A healer's knowledge begins with the body. Let me teach you the words.",
+      questActive: "How are your studies progressing? The body has many parts to learn.",
+      questComplete: "Excellent! Now you can describe any ailment. This knowledge may save a life.",
+      noQuests: "Everyone is healthy today, thank the light. Rest well."
+    },
+    quests: [
+      'vl_12_body'
+    ]
+  },
+
+  merchant_henri: {
+    id: 'merchant_henri',
+    name: 'Henri',
+    icon: '🛒',
+    title: 'Traveling Merchant',
+    location: 'haari_fields',
+    dialogue: {
+      greeting: "Welcome, welcome! Henri has the finest goods from across the land!",
+      questAvailable: "Ah, but first - let Henri teach you the words for fine clothing!",
+      questActive: "Have you learned the clothing words? A well-dressed customer is the best customer!",
+      questComplete: "Magnifique! Now you can shop in any French market with confidence!",
+      noQuests: "Browse my wares! Special prices for friends of Henri!"
+    },
+    quests: [
+      'vl_13_clothing'
+    ]
+  },
+
+  // =====================================================
+  // Zone 3 - Lurenium NPCs
+  // =====================================================
+
+  merchant_liselle: {
+    id: 'merchant_liselle',
+    name: 'Merchant Liselle',
+    icon: '💰',
+    title: 'Trade Master',
+    role: 'Trade Network',
+    location: 'lurenium',
+    dialogue: {
+      greeting: "Ah, a new face in the golden city! Trade is the lifeblood of Lurenium.",
+      questAvailable: "I have contracts that need fulfilling. Interested in making some gold?",
+      questActive: "How goes the gathering? My buyers grow impatient.",
+      questComplete: "Excellent work! Payment as promised. Shall we discuss more business?",
+      noQuests: "Check back later - new shipments arrive regularly.",
+      tradeWelcome: "Welcome to the Trade Network. What can I help you with today?",
+      rankUp: "Your reputation grows! More lucrative contracts are now available to you."
+    },
+    quests: [
+      'ms_3_04_coin_and_trade'
+    ],
+    features: ['trade_network'],
+    tradeDialogue: {
+      viewContracts: "Let me see what orders have come in...",
+      acceptContract: "A wise choice. Bring me the goods when you're ready.",
+      fulfillContract: "You have everything? Let me verify... Perfect!",
+      abandonContract: "Changed your mind? No penalty - but the offer may not last.",
+      noContracts: "No new orders right now. Check back soon."
+    }
+  },
+
+  captain_varro: {
+    id: 'captain_varro',
+    name: 'Captain Varro',
+    icon: '🛡️',
+    title: 'Captain of the Old Guard',
+    role: 'City Guard',
+    location: 'lurenium',
+    dialogue: {
+      greeting: "State your business, traveler. The gates of Lurenium don't open for everyone.",
+      questAvailable: "I could use someone with your skills. Interested?",
+      questActive: "Report when you've completed your task.",
+      questComplete: "Well done. You've earned the respect of the Old Guard.",
+      noQuests: "The city is secure for now. Be watchful."
+    },
+    quests: [
+      'ms_3_01_the_gates_of_gold',
+      'ms_3_06_the_captains_honor'
+    ]
+  },
+
+  archivist_thelon: {
+    id: 'archivist_thelon',
+    name: 'Archivist Thelon',
+    icon: '📜',
+    title: 'Keeper of Records',
+    role: 'Archives',
+    location: 'lurenium',
+    dialogue: {
+      greeting: "Shh... the archives demand quiet contemplation.",
+      questAvailable: "There is something you could help me with, if you have patience for old papers.",
+      questActive: "Have you found what I asked for?",
+      questComplete: "Fascinating... this changes everything we thought we knew.",
+      noQuests: "The archives hold many secrets, but none that need your attention today."
+    },
+    quests: [
+      'ms_3_02_the_archivists_task',
+      'ms_3_07_whispers_in_stone',
+      'ms_3_08_the_sealed_archives',
+      'ms_3_09_cracks_in_gold'
+    ]
+  },
+
+  magistrate_corinne: {
+    id: 'magistrate_corinne',
+    name: 'Magistrate Corinne',
+    icon: '⚖️',
+    title: 'Voice of the Council',
+    role: 'City Government',
+    location: 'lurenium',
+    dialogue: {
+      greeting: "Lurenium welcomes all who respect its laws and traditions.",
+      questAvailable: "The council has a matter that requires... discretion.",
+      questActive: "Has the matter been resolved to satisfaction?",
+      questComplete: "The council is pleased. You have proven yourself a friend to Lurenium.",
+      noQuests: "The city runs smoothly. Enjoy your time here."
+    },
+    quests: [
+      'ms_3_03_law_and_order',
+      'ms_3_10_the_kings_two_sons'
+    ]
+  },
+
+  brother_cassius: {
+    id: 'brother_cassius',
+    name: 'Brother Cassius',
+    icon: '🙏',
+    title: 'Priest of the Golden Temple',
+    role: 'Temple',
+    location: 'lurenium',
+    dialogue: {
+      greeting: "May the light of the ancients guide your path.",
+      questAvailable: "The temple could use a helping hand, if you are willing.",
+      questActive: "The faithful await your return.",
+      questComplete: "Blessings upon you. The temple remembers those who serve.",
+      noQuests: "Find peace in contemplation. The temple is always open to you."
+    },
+    quests: [
+      'ms_3_05_the_temples_light'
+    ]
+  },
+
+  // =====================================================
+  // Special NPCs - Memory Shrine
+  // =====================================================
+
+  shrine_keeper: {
+    id: 'shrine_keeper',
+    name: 'Shrine Keeper',
+    icon: '🏛️',
+    title: 'Guardian of Memory',
+    role: 'Memory Shrine',
+    location: 'dawnmere',
+    isShrine: true, // Special flag for shrine interaction
+    dialogue: {
+      greeting: "Welcome, seeker of knowledge. The Memory Shrine awaits your devotion.",
+      tier0: "You are new to the ways of memory. Let the shrine guide your first steps.",
+      tier1: "Your dedication grows. The shrine recognizes your efforts.",
+      tier2: "You have become adept in the arts of retention. New challenges await.",
+      tier3: "A true scholar stands before me. The shrine's deeper secrets are yours.",
+      tier4: "Master of memory, your mind is a fortress of knowledge.",
+      tier5: "Sage... few have walked this path. The shrine bows to your wisdom.",
+      practiceIntro: "Through focused meditation, you may strengthen what you have learned.",
+      noWords: "You must first learn words through your lessons before the shrine can test you.",
+      blessingGrant: "May this blessing aid your journey."
+    },
+    quests: []
   }
 };
 

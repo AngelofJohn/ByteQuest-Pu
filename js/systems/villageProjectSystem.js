@@ -446,7 +446,11 @@ class VillageProjectsManager {
 
     // Gold
     if (rewards.gold) {
-      this.state.player.gold += rewards.gold;
+      if (typeof currencyManager !== 'undefined' && currencyManager) {
+        currencyManager.addGold(rewards.gold, TransactionType.QUEST_REWARD, { source: 'village_project', projectId });
+      } else {
+        this.state.player.gold = (this.state.player.gold || 0) + rewards.gold;
+      }
       grantedRewards.push(`+${rewards.gold} gold`);
     }
 
@@ -599,8 +603,11 @@ class VillageProjectsManager {
   // ===================================================
 
   getPlayerItemCount(itemId) {
-    // Special case: gold
+    // Special case: gold - use CurrencyManager if available
     if (itemId === 'gold') {
+      if (typeof currencyManager !== 'undefined' && currencyManager) {
+        return currencyManager.getGold();
+      }
       return this.state.player.gold || 0;
     }
     // Use ItemManager if available
@@ -613,9 +620,14 @@ class VillageProjectsManager {
   }
 
   removePlayerItems(itemId, amount) {
-    // Special case: gold
+    // Special case: gold - use CurrencyManager if available
     if (itemId === 'gold') {
-      this.state.player.gold = Math.max(0, (this.state.player.gold || 0) - amount);
+      if (typeof currencyManager !== 'undefined' && currencyManager) {
+        currencyManager.spendGold(amount, TransactionType.DONATION, { source: 'village_project' });
+      } else {
+        this.state.player.gold = Math.max(0, (this.state.player.gold || 0) - amount);
+      }
+      if (typeof renderHUD === 'function') renderHUD();
       return;
     }
     if (typeof itemManager !== 'undefined' && itemManager) {

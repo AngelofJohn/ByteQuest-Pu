@@ -5,95 +5,59 @@
 // Inventory Screen
 // =====================================================
 
-function showInventoryScreen() {
+// Track current inventory tab
+let currentInventoryTab = 'items';
+
+function showInventoryScreen(tab = null) {
   const player = GameState.player;
   if (!player) {
     showNotification('Player data not available', 'error');
     return;
   }
 
+  // Use provided tab or keep current
+  if (tab) currentInventoryTab = tab;
+
   const inventory = player.inventory || [];
 
-  // Group items by type
-  const itemsByType = {};
+  // Get all item definitions (including resources)
+  const allItemDefs = {
+    ...(typeof GAME_DATA !== 'undefined' ? GAME_DATA.items : {}),
+    ...(typeof RESOURCE_ITEMS !== 'undefined' ? RESOURCE_ITEMS : {})
+  };
+
+  // Separate materials from regular items
+  const materials = [];
+  const regularItems = [];
+
   inventory.forEach(invItem => {
-    const itemData = typeof GAME_DATA !== 'undefined' ? GAME_DATA.items?.[invItem.id] : null;
-    const type = itemData?.type || 'misc';
-    if (!itemsByType[type]) {
-      itemsByType[type] = [];
+    const itemData = allItemDefs[invItem.id] || null;
+    const itemWithData = { ...invItem, data: itemData };
+
+    // Check if it's a crafting material
+    if (itemData?.category === 'crafting_material' || itemData?.type === 'material') {
+      materials.push(itemWithData);
+    } else {
+      regularItems.push(itemWithData);
     }
-    itemsByType[type].push({ ...invItem, data: itemData });
   });
 
-  // Build inventory HTML
-  let inventoryHtml = '';
-  if (inventory.length === 0) {
-    inventoryHtml = `
-      <div class="inventory-empty">
-        <div class="empty-icon">🎒</div>
-        <div class="empty-text">Your inventory is empty</div>
-        <div class="empty-hint">Complete quests and gather resources to find items!</div>
-      </div>
-    `;
-  } else {
-    const typeOrder = ['weapon', 'armor', 'helm', 'accessory', 'ring', 'consumable', 'material', 'misc'];
-    const typeNames = {
-      weapon: '⚔️ Weapons',
-      armor: '🛡️ Armor',
-      helm: '🪖 Helms',
-      accessory: '📿 Accessories',
-      ring: '💍 Rings',
-      consumable: '🧪 Consumables',
-      material: '📦 Materials',
-      misc: '📋 Misc'
-    };
+  // Count totals for tab badges
+  const itemCount = regularItems.reduce((sum, i) => sum + (i.count || 1), 0);
+  const materialCount = materials.reduce((sum, i) => sum + (i.count || 1), 0);
 
-    typeOrder.forEach(type => {
-      const items = itemsByType[type];
-      if (!items || items.length === 0) return;
+  // Build items content
+  const itemsContent = buildInventoryItemsHtml(regularItems);
 
-      const itemsHtml = items.map(item => {
-        const data = item.data;
-        const icon = data?.icon || '❓';
-        const name = data?.name || item.id;
-        const count = item.count > 1 ? ` x${item.count}` : '';
-        const equipped = isItemEquipped(item.id) ? '<span class="equipped-badge">E</span>' : '';
-
-        // Build stats text
-        let statsText = '';
-        if (data?.stats) {
-          const statParts = Object.entries(data.stats).map(([k, v]) => `+${v} ${k}`);
-          statsText = `<div class="item-stats">${statParts.join(', ')}</div>`;
-        }
-
-        return `
-          <div class="inventory-item" data-item-id="${item.id}" onclick="showItemDetails('${item.id}')">
-            <div class="item-icon">${icon}${equipped}</div>
-            <div class="item-info">
-              <div class="item-name">${name}${count}</div>
-              ${statsText}
-            </div>
-          </div>
-        `;
-      }).join('');
-
-      inventoryHtml += `
-        <div class="inventory-section">
-          <div class="inventory-section-title">${typeNames[type] || type}</div>
-          <div class="inventory-items">
-            ${itemsHtml}
-          </div>
-        </div>
-      `;
-    });
-  }
+  // Build materials content
+  const materialsContent = buildMaterialsHtml(materials);
 
   // Equipment section
-  const equipSlots = ['weapon', 'helm', 'armor', 'accessory', 'ring'];
+  const equipSlots = ['helm', 'armor', 'accessory', 'ring'];
   const equipmentHtml = equipSlots.map(slot => {
     const itemId = player.equipment?.[slot];
-    const item = itemId && typeof GAME_DATA !== 'undefined' ? GAME_DATA.items?.[itemId] : null;
-    const slotNames = { weapon: 'Weapon', helm: 'Helm', armor: 'Armor', accessory: 'Accessory', ring: 'Ring' };
+    const item = itemId ? allItemDefs[itemId] : null;
+    const slotNames = { helm: 'Helm', armor: 'Armor', accessory: 'Accessory', ring: 'Ring' };
 
     return `
       <div class="equipment-slot ${item ? 'equipped' : 'empty'}" data-slot="${slot}">
@@ -122,15 +86,221 @@ function showInventoryScreen() {
         </div>
 
         <div class="inventory-panel">
-          <div class="panel-title">Items</div>
+          <div class="inventory-tabs">
+            <button class="inventory-tab ${currentInventoryTab === 'items' ? 'active' : ''}"
+                    onclick="showInventoryScreen('items')">
+              🎒 Items ${itemCount > 0 ? `<span class="tab-badge">${itemCount}</span>` : ''}
+            </button>
+            <button class="inventory-tab ${currentInventoryTab === 'materials' ? 'active' : ''}"
+                    onclick="showInventoryScreen('materials')">
+              ⛏️ Materials ${materialCount > 0 ? `<span class="tab-badge">${materialCount}</span>` : ''}
+            </button>
+          </div>
           <div class="inventory-list">
-            ${inventoryHtml}
+            ${currentInventoryTab === 'items' ? itemsContent : materialsContent}
           </div>
         </div>
       </div>
 
       <div class="inventory-footer">
         <button class="pixel-btn" onclick="hideModal('inventory-modal')">Close</button>
+      </div>
+    </div>
+  `);
+}
+
+/**
+ * Build HTML for regular inventory items (grouped by type)
+ */
+function buildInventoryItemsHtml(items) {
+  if (items.length === 0) {
+    return `
+      <div class="inventory-empty">
+        <div class="empty-icon">🎒</div>
+        <div class="empty-text">No items</div>
+        <div class="empty-hint">Complete quests to find equipment and consumables!</div>
+      </div>
+    `;
+  }
+
+  // Group items by type
+  const itemsByType = {};
+  items.forEach(item => {
+    const type = item.data?.type || 'misc';
+    if (!itemsByType[type]) itemsByType[type] = [];
+    itemsByType[type].push(item);
+  });
+
+  const typeOrder = ['armor', 'helm', 'accessory', 'ring', 'consumable', 'misc'];
+  const typeNames = {
+    armor: '🛡️ Armor',
+    helm: '🪖 Helms',
+    accessory: '📿 Accessories',
+    ring: '💍 Rings',
+    consumable: '🧪 Consumables',
+    misc: '📋 Misc'
+  };
+
+  let html = '';
+  typeOrder.forEach(type => {
+    const typeItems = itemsByType[type];
+    if (!typeItems || typeItems.length === 0) return;
+
+    const itemsHtml = typeItems.map(item => buildItemHtml(item)).join('');
+    html += `
+      <div class="inventory-section">
+        <div class="inventory-section-title">${typeNames[type] || type}</div>
+        <div class="inventory-items">${itemsHtml}</div>
+      </div>
+    `;
+  });
+
+  return html;
+}
+
+/**
+ * Build HTML for materials (grouped by resource type)
+ */
+function buildMaterialsHtml(materials) {
+  if (materials.length === 0) {
+    return `
+      <div class="inventory-empty">
+        <div class="empty-icon">⛏️</div>
+        <div class="empty-text">No materials</div>
+        <div class="empty-hint">Gather resources from mining, herbalism, and fishing!</div>
+      </div>
+    `;
+  }
+
+  // Group materials by crafting tier or source
+  const materialGroups = {
+    ore: { name: '⛏️ Ores & Metals', items: [] },
+    wood: { name: '🪵 Wood', items: [] },
+    hide: { name: '🦴 Hides & Pelts', items: [] },
+    herb: { name: '🌿 Herbs & Plants', items: [] },
+    fish: { name: '🐟 Fish', items: [] },
+    other: { name: '📦 Other', items: [] }
+  };
+
+  materials.forEach(item => {
+    const id = item.id.toLowerCase();
+    if (id.includes('ore') || id.includes('chunk') || id.includes('vein') || id.includes('iron') || id.includes('copper') || id.includes('silver') || id.includes('gold')) {
+      materialGroups.ore.items.push(item);
+    } else if (id.includes('log') || id.includes('timber') || id.includes('wood')) {
+      materialGroups.wood.items.push(item);
+    } else if (id.includes('hide') || id.includes('pelt') || id.includes('fur') || id.includes('leather')) {
+      materialGroups.hide.items.push(item);
+    } else if (id.includes('leaf') || id.includes('petal') || id.includes('herb') || id.includes('blossom') || id.includes('root') || id.includes('flower')) {
+      materialGroups.herb.items.push(item);
+    } else if (id.includes('fish') || id.includes('trout') || id.includes('salmon') || id.includes('bass') || id.includes('carp')) {
+      materialGroups.fish.items.push(item);
+    } else {
+      materialGroups.other.items.push(item);
+    }
+  });
+
+  let html = '';
+  Object.values(materialGroups).forEach(group => {
+    if (group.items.length === 0) return;
+
+    const itemsHtml = group.items.map(item => buildMaterialItemHtml(item)).join('');
+    html += `
+      <div class="inventory-section">
+        <div class="inventory-section-title">${group.name}</div>
+        <div class="inventory-items material-grid">${itemsHtml}</div>
+      </div>
+    `;
+  });
+
+  return html;
+}
+
+/**
+ * Build HTML for a single inventory item
+ */
+function buildItemHtml(item) {
+  const data = item.data;
+  const icon = data?.icon || '❓';
+  const name = data?.name || item.id;
+  const count = item.count > 1 ? ` x${item.count}` : '';
+  const equipped = isItemEquipped(item.id) ? '<span class="equipped-badge">E</span>' : '';
+
+  let statsText = '';
+  if (data?.stats) {
+    const statParts = Object.entries(data.stats).map(([k, v]) => `+${v} ${k}`);
+    statsText = `<div class="item-stats">${statParts.join(', ')}</div>`;
+  }
+
+  return `
+    <div class="inventory-item" data-item-id="${item.id}" onclick="showItemDetails('${item.id}')">
+      <div class="item-icon">${icon}${equipped}</div>
+      <div class="item-info">
+        <div class="item-name">${name}${count}</div>
+        ${statsText}
+      </div>
+    </div>
+  `;
+}
+
+/**
+ * Build HTML for a single material item (compact grid view)
+ */
+function buildMaterialItemHtml(item) {
+  const data = item.data;
+  const icon = data?.icon || '❓';
+  const name = data?.name || item.id;
+  const count = item.count || 1;
+
+  return `
+    <div class="material-item" data-item-id="${item.id}" onclick="showMaterialDetails('${item.id}')" title="${name}">
+      <div class="material-icon">${icon}</div>
+      <div class="material-count">x${count}</div>
+    </div>
+  `;
+}
+
+/**
+ * Show material details popup
+ */
+function showMaterialDetails(itemId) {
+  const allItemDefs = {
+    ...(typeof GAME_DATA !== 'undefined' ? GAME_DATA.items : {}),
+    ...(typeof RESOURCE_ITEMS !== 'undefined' ? RESOURCE_ITEMS : {})
+  };
+
+  const item = allItemDefs[itemId];
+  if (!item) {
+    showNotification('Unknown material', 'error');
+    return;
+  }
+
+  const invItem = GameState.player.inventory?.find(i => i.id === itemId);
+  const count = invItem?.count || 0;
+
+  showModal('material-details-modal', `
+    <div class="item-details-popup">
+      <div class="item-details-header">
+        <span class="item-icon-large">${item.icon || '❓'}</span>
+        <div class="item-title">
+          <h3>${item.name}</h3>
+          <div class="item-count">You have: ${count}</div>
+        </div>
+      </div>
+      <div class="item-description">${item.description || 'A crafting material.'}</div>
+      <div class="item-details-info">
+        <div class="detail-row">
+          <span class="detail-label">Sell Price:</span>
+          <span class="detail-value">💰 ${item.sellPrice || 0}</span>
+        </div>
+        ${item.craftingTier ? `
+        <div class="detail-row">
+          <span class="detail-label">Crafting Tier:</span>
+          <span class="detail-value">Tier ${item.craftingTier}</span>
+        </div>
+        ` : ''}
+      </div>
+      <div class="item-details-actions">
+        <button class="pixel-btn secondary" onclick="hideModal('material-details-modal')">Close</button>
       </div>
     </div>
   `);
@@ -1177,17 +1347,6 @@ const GATHERING_SKILL_DATA = {
       { name: 'Silver Lodes', level: 10, resources: 'Silver Ore' }
     ]
   },
-  woodcutting: {
-    icon: '🪓',
-    name: 'Woodcutting',
-    description: 'Chop trees to gather wood and timber.',
-    color: '#8b4513',
-    tiers: [
-      { name: 'Pine Forest', level: 1, resources: 'Pine Logs' },
-      { name: 'Oak Grove', level: 5, resources: 'Oak Timber' },
-      { name: 'Ancient Woods', level: 10, resources: 'Ironwood' }
-    ]
-  },
   herbalism: {
     icon: '🌿',
     name: 'Herbalism',
@@ -1208,17 +1367,6 @@ const GATHERING_SKILL_DATA = {
       { name: 'River Fishing', level: 1, resources: 'River Perch' },
       { name: 'Lake Fishing', level: 5, resources: 'Lake Trout' },
       { name: 'Deep Sea', level: 10, resources: 'Sea Bass' }
-    ]
-  },
-  hunting: {
-    icon: '🏹',
-    name: 'Hunting',
-    description: 'Track and hunt animals for hides and meat.',
-    color: '#8b0000',
-    tiers: [
-      { name: 'Boar Hunting', level: 1, resources: 'Boar Hides' },
-      { name: 'Wolf Tracking', level: 5, resources: 'Wolf Pelts' },
-      { name: 'Bear Hunt', level: 10, resources: 'Bear Furs' }
     ]
   }
 };
@@ -1357,7 +1505,7 @@ function unlockAllGatheringSkills() {
     GameState.player.gatheringSkills = [];
   }
 
-  const allSkills = ['mining', 'woodcutting', 'herbalism', 'fishing', 'hunting'];
+  const allSkills = ['mining', 'herbalism', 'fishing'];
   allSkills.forEach(skill => {
     if (!GameState.player.gatheringSkills.includes(skill)) {
       GameState.player.gatheringSkills.push(skill);
